@@ -23,9 +23,8 @@ Meta AI Glasses. These values are stored in gitignored files.
 ## Sharing captured photos
 
 On Android, the example applies EXIF orientation before sharing a photo, since
-some share targets ignore orientation in DAT HEIC files. Photos needing rotation
-or mirroring are shared as JPEGs; already-upright files and iOS captures retain
-their original format. The core plugin still returns the original capture bytes.
+some share targets ignore orientation in DAT HEIC files. Android photos are shared as JPEGs; already-upright JPEGs avoid re-encoding.
+iOS captures retain their original format. The core plugin still returns the original capture bytes.
 
 ## Getting Started
 

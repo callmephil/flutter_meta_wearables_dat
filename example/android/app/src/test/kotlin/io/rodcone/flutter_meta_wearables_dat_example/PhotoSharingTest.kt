@@ -50,6 +50,26 @@ class PhotoSharingTest {
         }
     }
 
+    @Test
+    fun `upright non JPEG is converted to JPEG`() {
+        val bitmap = Bitmap.createBitmap(80, 40, Bitmap.Config.ARGB_8888)
+        val input = java.io.ByteArrayOutputStream()
+        bitmap.eraseColor(Color.RED)
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, input)
+        bitmap.recycle()
+        val output = PhotoSharing.orientedJpeg(input.toByteArray())!!
+        assertEquals(0xFF, output[0].toInt() and 0xFF)
+        assertEquals(0xD8, output[1].toInt() and 0xFF)
+        val decoded = BitmapFactory.decodeByteArray(output, 0, output.size)
+        try {
+            assertEquals(80, decoded.width)
+            assertEquals(40, decoded.height)
+            assertTrue(distance(decoded.getPixel(40, 20), Color.RED) < 10)
+        } finally {
+            decoded.recycle()
+        }
+    }
+
     private fun fixture(orientation: Int, colors: IntArray): ByteArray {
         val bitmap = Bitmap.createBitmap(80, 40, Bitmap.Config.ARGB_8888)
         val file = File.createTempFile("photo-orientation", ".jpg")

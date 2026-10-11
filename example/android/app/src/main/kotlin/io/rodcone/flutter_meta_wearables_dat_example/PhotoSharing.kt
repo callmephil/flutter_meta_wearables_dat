@@ -8,7 +8,7 @@ import java.io.ByteArrayOutputStream
 
 /** DAT HEIC photos may carry EXIF orientation that Android share targets ignore. */
 internal object PhotoSharing {
-    // Null means the original file can be shared without re-encoding.
+    // Null means the original is an upright JPEG and needs no re-encoding.
     fun orientedJpeg(bytes: ByteArray): ByteArray? {
         val orientation = bytes.inputStream().use {
             ExifInterface(it).getAttributeInt(
@@ -16,7 +16,9 @@ internal object PhotoSharing {
             )
         }
         val matrix = orientationMatrix(orientation)
-        if (matrix.isIdentity) return null
+        val isJpeg = bytes.size >= 3 && bytes[0] == 0xFF.toByte() &&
+            bytes[1] == 0xD8.toByte() && bytes[2] == 0xFF.toByte()
+        if (matrix.isIdentity && isJpeg) return null
         val source = requireNotNull(BitmapFactory.decodeByteArray(bytes, 0, bytes.size)) {
             "Could not decode captured photo"
         }
