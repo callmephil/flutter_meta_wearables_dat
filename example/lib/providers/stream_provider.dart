@@ -852,7 +852,12 @@ class StreamSessionProvider extends ChangeNotifier {
       // active session regardless, but passing the pair the auto-selector
       // actually picked makes the logs say which glasses took the photo.
       final target = _selectedDeviceId ?? streamingDevice?.id;
-      final photo = await MetaWearablesDat.capturePhoto(target);
+      final photo = await MetaWearablesDat.capturePhoto(
+        target,
+        format: defaultTargetPlatform == TargetPlatform.iOS
+            ? PhotoCaptureFormat.heic
+            : PhotoCaptureFormat.jpeg,
+      );
       return await preparePhotoForSharing(photo);
     } on PlatformException catch (e) {
       debugPrint('[MetaWearablesDAT] Error capturing photo: $e');
