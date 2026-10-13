@@ -20,6 +20,12 @@ Meta AI Glasses. These values are stored in gitignored files.
    with your values from the [Meta Wearables Developer Center](https://wearables.developer.meta.com/devcenter)
 3. Use `0` for `META_APPLICATION_ID` if using Developer Mode
 
+## Sharing captured photos
+
+On Android, the example applies EXIF orientation before sharing a photo, since
+some share targets ignore orientation in DAT HEIC files. Android photos are shared as JPEGs; already-upright JPEGs avoid re-encoding.
+iOS captures retain their original format. The core plugin still returns the original capture bytes.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

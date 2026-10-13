@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_meta_wearables_dat/flutter_meta_wearables_dat.dart';
 import 'package:flutter_meta_wearables_dat_example/providers/device_provider.dart';
 import 'package:flutter_meta_wearables_dat_example/providers/mock_device_provider.dart';
+import 'package:flutter_meta_wearables_dat_example/utils/photo_sharing.dart';
 import 'package:flutter_meta_wearables_dat_mock_device/flutter_meta_wearables_dat_mock_device.dart';
 
 /// Provider to manage streaming state and active device monitoring.
@@ -852,7 +853,7 @@ class StreamSessionProvider extends ChangeNotifier {
       // actually picked makes the logs say which glasses took the photo.
       final target = _selectedDeviceId ?? streamingDevice?.id;
       final photo = await MetaWearablesDat.capturePhoto(target);
-      return photo;
+      return await preparePhotoForSharing(photo);
     } on PlatformException catch (e) {
       debugPrint('[MetaWearablesDAT] Error capturing photo: $e');
       // Capture failures arrive only here, never on the error stream, so
