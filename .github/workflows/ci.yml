@@ -473,3 +473,21 @@ jobs:
       - name: Android unit tests
         working-directory: example/android
         run: ./gradlew :flutter_meta_wearables_dat:testDebugUnitTest
+      - name: Android photo-sharing tests
+        working-directory: example/android
+        run: ./gradlew :app:testDebugUnitTest --tests 'io.rodcone.flutter_meta_wearables_dat_example.PhotoSharingTest'
+      - name: Verify photo-sharing tests executed
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          import xml.etree.ElementTree as ET
+
+          report = pathlib.Path('example/build/app/test-results/testDebugUnitTest/TEST-io.rodcone.flutter_meta_wearables_dat_example.PhotoSharingTest.xml')
+          if not report.is_file():
+              raise SystemExit('::error::PhotoSharingTest JUnit report is missing')
+          suite = ET.parse(report).getroot()
+          cases = suite.findall('testcase')
+          if not cases or any(case.find(tag) is not None for case in cases for tag in ('skipped', 'failure', 'error')):
+              raise SystemExit('::error::PhotoSharingTest must execute with no skipped or failed tests')
+          print(f'PhotoSharingTest: {len(cases)} tests executed successfully')
+          PY
