@@ -801,6 +801,8 @@ class MetaWearablesDat {
   ///
   /// Throws a `PlatformException` with code `STREAM_ACTIVE` if a stream is
   /// already running on a *different* device — stop it first, then start.
+  /// On iOS, also throws `STREAM_ACTIVE` while another start or teardown is
+  /// in progress. Await [stopStreamSession] before starting a new session.
   static Future<int> startStreamSession(
     String? deviceId, {
     StreamFrameRate frameRate = StreamFrameRate.fps30,

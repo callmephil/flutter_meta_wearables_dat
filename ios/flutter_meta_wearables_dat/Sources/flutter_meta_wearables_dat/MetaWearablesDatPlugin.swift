@@ -36,6 +36,7 @@ public class MetaWearablesDatPlugin: NSObject, FlutterPlugin {
   // Guards concurrent startStreamSession calls: a second start that tore down
   // the first's in-flight session would leave the first awaiting `.started`.
   private var isStartingSession = false
+  private let streamTeardownGate = StreamTeardownGate()
   private var deviceSession: DeviceSession?
   private var deviceSessionStateTask: Task<Void, Never>?
   private var deviceSessionErrorTask: Task<Void, Never>?
@@ -1011,6 +1012,9 @@ public class MetaWearablesDatPlugin: NSObject, FlutterPlugin {
 
   @MainActor
   private func teardownStreamOnly() async {
+    streamTeardownGate.enter()
+    defer { streamTeardownGate.leave() }
+
     if let inFlight = teardownTask {
       await inFlight.value
     }
@@ -1028,11 +1032,9 @@ public class MetaWearablesDatPlugin: NSObject, FlutterPlugin {
   private func performTeardownStreamOnly() async {
     NSLog("[MWDAT] teardownStreamOnly — stopping camera, awaiting stop cascade")
 
-    // Capture identities and stop BEFORE the first suspension below. While this
-    // method is suspended the stream must already be `.stopping`: otherwise a
-    // concurrent `startStreamSession` takes the "a stream is already active"
-    // branch and hands Dart back a texture id this teardown is about to
-    // unregister.
+    // Capture identities before suspending. The teardown gate blocks new starts
+    // before they can reuse this texture, including while audio cancellation
+    // awaits below. The audio listener must be cancelled before camera.stop().
     let stoppingCamera = camera
     let stoppingStream = streamSession
     let stoppingTextureId = textureId
@@ -1077,14 +1079,10 @@ public class MetaWearablesDatPlugin: NSObject, FlutterPlugin {
       videoListenerToken = nil
     }
 
-    // Everything below is scoped to the resources this call started with. The
-    // wait suspends for up to `streamStopTimeout`, and the capability is
-    // already detached by then — so a concurrent `startStreamSession` can
-    // legitimately succeed during the wait and install a *new* camera, stream
-    // and texture. That's fine and worth allowing (it's a fast restart), but
-    // this teardown must not then clear the newcomer's state: doing so would
-    // unregister a live texture and orphan a running stream with no reference
-    // left to stop it.
+    // Keep cleanup scoped to the resources captured above. New starts are
+    // blocked during teardown, but SDK callbacks and a start already in flight
+    // can still change state across a suspension. Never clear a replacement's
+    // camera, stream or texture on behalf of the resources we stopped.
     if let stoppingStream {
       await awaitStreamStopped(stoppingStream)
     }
@@ -1176,6 +1174,11 @@ public class MetaWearablesDatPlugin: NSObject, FlutterPlugin {
   /// config is applied.
   @MainActor
   private func teardownDeviceSession() async {
+    // Keep admission closed after stream cleanup until the device session has
+    // stopped too. Stream-only and queued teardowns hold their own nested scope.
+    streamTeardownGate.enter()
+    defer { streamTeardownGate.leave() }
+
     await teardownStreamOnly()
     deviceSessionStateTask?.cancel()
     deviceSessionStateTask = nil
@@ -1879,6 +1882,12 @@ public class MetaWearablesDatPlugin: NSObject, FlutterPlugin {
           code: "APP_BACKGROUNDED",
           message: "Cannot start a stream while the app is backgrounded. Call enableBackgroundStreaming() first if you need background capture.",
           details: nil))
+        return
+      }
+      // This check must precede the existing-session fast path: audio listener
+      // cancellation can suspend while the old SDK stream still says streaming.
+      if streamTeardownGate.isActive {
+        result(FlutterError(code: "STREAM_ACTIVE", message: "A stream session is stopping. Wait for stopStreamSession() to complete before starting again.", details: nil))
         return
       }
       isStartingSession = true

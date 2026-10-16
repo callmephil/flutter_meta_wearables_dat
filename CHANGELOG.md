@@ -1,5 +1,7 @@
 ## Unreleased
 
+- iOS: reject starts with `STREAM_ACTIVE` throughout stream and device-session teardown, so an overlapping start cannot reuse a texture being released.
+
 - iOS: carry the glasses' microphone on the camera stream. `startStreamSession(audio: true)` asks DAT for 16 kHz mono PCM, delivered as `Uint8List` through the new `audioFramesStream()`, in the foreground and, with background streaming enabled, in the background. New `requestMicrophonePermission()` / `getMicrophonePermissionStatus()`. Android ignores `audio` for now.
 
 ## 1.0.0
