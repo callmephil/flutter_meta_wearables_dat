@@ -16,10 +16,14 @@ import Flutter
 final class AudioFrameStreamHandler: NSObject, FlutterStreamHandler {
   private let lock = NSLock()
   private var eventSink: FlutterEventSink?
+  // Listen/cancel run on the platform thread. SDK callbacks capture this value
+  // before copying bytes, then delivery rechecks it on the platform thread.
+  private var subscriptionGeneration: UInt64 = 0
   private var loggedFormat = false
 
   func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
     lock.lock()
+    subscriptionGeneration &+= 1
     eventSink = events
     lock.unlock()
     return nil
@@ -27,6 +31,7 @@ final class AudioFrameStreamHandler: NSObject, FlutterStreamHandler {
 
   func onCancel(withArguments arguments: Any?) -> FlutterError? {
     lock.lock()
+    subscriptionGeneration &+= 1
     eventSink = nil
     lock.unlock()
     return nil
@@ -44,7 +49,8 @@ final class AudioFrameStreamHandler: NSObject, FlutterStreamHandler {
   /// bytes on the main thread, where Flutter expects event sinks to be called.
   func send(_ buffer: AVAudioPCMBuffer) {
     lock.lock()
-    let sink = eventSink
+    let generation = subscriptionGeneration
+    let hasListener = eventSink != nil
     let logFormat = !loggedFormat
     loggedFormat = true
     lock.unlock()
@@ -53,11 +59,17 @@ final class AudioFrameStreamHandler: NSObject, FlutterStreamHandler {
       let f = buffer.format
       NSLog("[MWDAT-AUDIO] first frame: \(f.sampleRate) Hz, \(f.channelCount) ch, format \(f.commonFormat.rawValue), interleaved \(f.isInterleaved), \(buffer.frameLength) frames")
     }
-    guard let sink, let data = Self.pcm16(buffer) else { return }
-    // Channel messages must be sent from the platform thread.
-    DispatchQueue.main.async {
+    guard hasListener, let data = Self.pcm16(buffer) else { return }
+    // Do not retain the sink across this hop: it may be cancelled/replaced while
+    // copying the SDK buffer or waiting for the platform thread. Flutter sinks
+    // publish on a shared channel, so even an old sink could reach a new listener.
+    DispatchQueue.main.async { [weak self] in
+      guard let self else { return }
       assert(Thread.isMainThread)
-      sink(FlutterStandardTypedData(bytes: data))
+      self.lock.lock()
+      let sink = self.subscriptionGeneration == generation ? self.eventSink : nil
+      self.lock.unlock()
+      sink?(FlutterStandardTypedData(bytes: data))
     }
   }
 

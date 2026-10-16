@@ -40,7 +40,7 @@ cd example/android && ./gradlew build --refresh-dependencies
 
 Dart tests live in `test/` and run with `flutter test`; CI runs them in the `test` job.
 
-Run `sh scripts/test-ios-stream-lifecycle.sh` on macOS for the host Swift teardown-gate tests and plugin wiring checks. These compile production lifecycle code without DAT or physical glasses.
+Run `sh scripts/test-ios-stream-lifecycle.sh` on macOS for the host Swift teardown-gate and audio-handler tests plus plugin wiring checks. These compile production code with host-only Flutter channel shims, real `AVAudioPCMBuffer` objects and controlled suspension points, without DAT or physical glasses.
 
 **The full plugin cannot currently be tested in a simulator.** The plugin's SwiftPM target links the vendored MWDAT xcframeworks, whose simulator slices do not match their sources — `flutter build ios --simulator` fails with `No type named 'Permission' in module 'MWDATCore'` and similar, on the core target as well as the mock. Until that is sorted, native invariants are covered by debug `assert`s plus source checks in CI (see the `platform-thread-affinity` job).
 
@@ -70,7 +70,7 @@ All three Dart files in `lib/` form the plugin's public API. `MetaWearablesDat` 
   - `flutter_meta_wearables_dat/stream_session_errors` — error maps with `code` and `message` keys. Carries both `Stream.errorStream` errors (`thermalCritical`, `thermalEmergency`, `peakPowerShutdown`, `batteryCritical`, …) and `DeviceSession.errors` (`deviceThermalCritical`, `datAppOnTheGlassesUpdateRequired`, `dwaUnavailable`, …). String codes are kept identical across iOS and Android.
   - `flutter_meta_wearables_dat/video_stream_size` — `{width, height}` map emitted on stream start and resolution changes
   - `flutter_meta_wearables_dat/video_frames` — per-frame payloads (`codec`, `bytes`, `width`, `height`, `ptsUs`, `isKeyframe`) emitted in both foreground and background when a Dart subscriber is attached; zero-cost when no listeners. Codec-config frames (`VideoFrame.isCodecConfig == true` on Android in DAT 0.7.0) are filtered out before emission so recording consumers never see parameter-set frames as payload.
-  - `flutter_meta_wearables_dat/audio_frames` — iOS only: `Uint8List` chunks of 16-bit PCM, mono, 16 kHz, from the glasses' microphones while a stream started with `audio: true` is running. `AudioFrameStreamHandler` copies each SDK-owned `AVAudioPCMBuffer` inside the publisher callback and delivers on the main thread. The audio listener is cancelled before `camera.stop()`, per Meta's audio-streaming guidance.
+  - `flutter_meta_wearables_dat/audio_frames` — iOS only: `Uint8List` chunks of 16-bit PCM, mono, 16 kHz, from the glasses' microphones while a stream started with `audio: true` is running. `AudioFrameStreamHandler` copies each SDK-owned `AVAudioPCMBuffer` inside the publisher callback and delivers on the main thread. Listen/cancel advance a subscription generation; queued delivery rechecks it and retrieves the current sink on the platform thread, discarding frames from cancelled listeners. The audio listener is cancelled before `camera.stop()`, per Meta's audio-streaming guidance.
   - `flutter_meta_wearables_dat/device_state` — `{thermalLevel: Int}` map (Dart `ThermalLevel`: unknown=0, none=1, light=2, moderate=3, severe=4, critical=5, emergency=6, shutdown=7). The handler tracks the active device via `AutoDeviceSelector` and switches its inner per-device subscription whenever the active device changes.
 
 ### Native Implementations

@@ -26,8 +26,9 @@ start = method("startStreamSession")
 guard = start.index("if streamTeardownGate.isActive {")
 reuse = start.index("if let existing = streamSession")
 assert guard < reuse, "Teardown admission must precede reuse of the old texture"
-assert 'code: "STREAM_ACTIVE"' in start[guard:reuse]
-assert "return" in start[guard:reuse], "Busy starts must exit before texture reuse"
+guard_end = start.index("\n      }", guard)
+assert 'code: "STREAM_ACTIVE"' in start[guard:guard_end]
+assert "\n        return" in start[guard:guard_end], "Busy starts must exit before texture reuse"
 
 cleanup = method("performTeardownStreamOnly")
 assert cleanup.index("await token.cancel()") < cleanup.index("\n    camera?.stop()"), (
