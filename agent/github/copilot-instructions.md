@@ -39,7 +39,7 @@ All methods are static on `MetaWearablesDat`. Single import: `import 'package:fl
 
 Mock support lives in the optional add-on `flutter_meta_wearables_dat_mock_device` (since 0.4.0). Production builds that omit it skip `MWDATMockDevice` linkage and don't need `NSCameraUsageDescription` / `CAMERA`.
 
-- Add `flutter_meta_wearables_dat_mock_device: ^1.0.0` to dev/staging `pubspec.yaml`.
+- Add `flutter_meta_wearables_dat_mock_device: ^1.0.1` to dev/staging `pubspec.yaml`.
 - Import: `import 'package:flutter_meta_wearables_dat_mock_device/flutter_meta_wearables_dat_mock_device.dart';`
 - Optional bypass for registration/permission flows: `MetaWearablesDatMockDevice.configure(initiallyRegistered: true, initialPermissionsGranted: true)`
 - Lifecycle: `MetaWearablesDatMockDevice.pairGlasses({model})` → UUID (`model` defaults to `GlassesModel.rayBanMeta`; other values: `oakleyMetaHSTN`, `oakleyMetaVanguard`, `rayBanMetaOptics`, `metaGlasses`), then `.powerOn(uuid)` + `.don(uuid)`, optionally `.setCameraFacing(uuid, CameraFacing.back)`
@@ -72,3 +72,13 @@ Subscribe BEFORE starting operations. Cancel in dispose(). Always handle errors.
 See AGENTS.md at repository root for complete API signatures, configuration XML/Kotlin snippets, and debugging guide.
 
 DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests and new experimental capabilities are not exposed.
+
+### Optional iOS microphone audio (1.0.1)
+
+Request `MetaWearablesDat.requestMicrophonePermission()`, subscribe to
+`audioFramesStream()`, then use `startStreamSession(null, audio: true)`. Audio is
+16-bit little-endian mono PCM at 16 kHz; cancel the subscription in `dispose()`.
+Background delivery requires `enableBackgroundStreaming()` before starting.
+Android ignores `audio`; audio and microphone-permission methods are not
+implemented there. Guard those calls to iOS. DAT camera audio is experimental and subject to Meta's
+publishing restrictions.

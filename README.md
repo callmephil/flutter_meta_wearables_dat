@@ -31,7 +31,7 @@ No app-side platform-channel or native video-rendering code, JPEG encoding, or D
 - **Optional mock glasses:** Develop with a simulated pair driven by the phone's camera, without including mock-device dependencies in production.
 - **Reactive API:** Follow registration, availability, session, error, and thermal state with Dart `Stream`s.
 
-**Coming soon:** Support for more DAT capabilities is planned for future releases, starting with motion, inputs, and richer device state (battery, charging, wear detection, and hinge state). These APIs are not available yet; version 1.0.0 focuses on DAT 1.0.0 compatibility and the existing camera workflow.
+**Coming soon:** Support for more DAT capabilities is planned for future releases, starting with motion, inputs, and richer device state (battery, charging, wear detection, and hinge state). These APIs are not available yet; version 1.0.1 updates DAT and adds optional iOS glasses-microphone streaming alongside the existing camera workflow.
 
 ## Quick start
 
@@ -39,7 +39,7 @@ No app-side platform-channel or native video-rendering code, JPEG encoding, or D
 
 ```yaml
 dependencies:
-  flutter_meta_wearables_dat: ^1.0.0
+  flutter_meta_wearables_dat: ^1.0.1
 ```
 
 ### 2. Configure iOS or Android
@@ -333,7 +333,7 @@ Add the following to your app's `AndroidManifest.xml`:
 
 #### 2. Repository Configuration
 
-DAT 1.0.0 is published to Maven Central. No GitHub token is required. In `settings.gradle.kts`:
+DAT 1.0.x is published to Maven Central. No GitHub token is required. In `settings.gradle.kts`:
 
 ```kotlin
 dependencyResolutionManagement {
@@ -646,6 +646,9 @@ Bandwidth is adaptive: on a constrained link the SDK first steps the resolution 
 
 #### Microphone audio (iOS)
 
+Available since plugin 1.0.1. DAT marks camera audio experimental; it remains
+subject to Meta's [publishing restrictions](#publishing-and-availability).
+
 The glasses' microphones can ride on the camera stream as 16-bit PCM, mono,
 16 kHz. Ask for the microphone permission once (it opens Meta AI and comes back
 through your app link, like the camera permission), then start the stream with
@@ -723,8 +726,8 @@ Meta gates registration on real glasses, so during development it's often handy 
 ```yaml
 # pubspec.yaml — add only in dev/staging builds
 dependencies:
-  flutter_meta_wearables_dat: ^1.0.0
-  flutter_meta_wearables_dat_mock_device: ^1.0.0
+  flutter_meta_wearables_dat: ^1.0.1
+  flutter_meta_wearables_dat_mock_device: ^1.0.1
 ```
 
 ```dart
