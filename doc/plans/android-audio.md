@@ -1,7 +1,8 @@
 # Android in-stream audio
 
 Implements the plan prepared in the PR #50 review chat, on merged DAT 1.0.1
-(`5fdb1ff`). Keep the existing Dart API and iOS implementation. No version bump.
+(`5fdb1ff`). Keep the existing Dart API and iOS implementation. Both platforms ship audio in
+plugin 1.0.1; that version is already set, so no further version bump is needed.
 
 ## Preflight evidence and scope
 

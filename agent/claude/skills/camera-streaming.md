@@ -172,7 +172,7 @@ errorSub.cancel();
 
 See `example/lib/providers/stream_provider.dart` for the canonical pattern.
 
-### Optional microphone audio (iOS 1.0.1; Android unreleased)
+### Optional microphone audio (iOS and Android, since 1.0.1)
 
 Request `MetaWearablesDat.requestMicrophonePermission()`, subscribe to
 `audioFramesStream()`, then use `startStreamSession(null, audio: true)`. Audio is

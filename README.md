@@ -646,7 +646,7 @@ Bandwidth is adaptive: on a constrained link the SDK first steps the resolution 
 
 #### Microphone audio (iOS and Android)
 
-Available on iOS since 1.0.1; Android support is unreleased. **Beta:** Meta supports
+Available on both iOS and Android starting with plugin 1.0.1. **Beta:** Meta supports
 in-stream audio only in development and beta [release channels](https://wearables.developer.meta.com/docs/develop/dat/set-up-release-channels/), not production channels.
 
 The camera stream can carry glasses microphone audio as 16-bit little-endian
@@ -804,4 +804,4 @@ Contributions are welcome! Feel free to open [issues](https://github.com/rodcone
 
 MIT License — see [LICENSE](LICENSE) for details.
 
-DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests remain unexposed. Experimental camera audio is available on iOS and Android (Android support is unreleased), in development/beta release channels only. Motion, inputs, speech, and standalone photo capabilities remain unexposed.
+DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests remain unexposed. Experimental camera audio is available on iOS and Android starting with plugin 1.0.1, in development/beta release channels only. Motion, inputs, speech, and standalone photo capabilities remain unexposed.
