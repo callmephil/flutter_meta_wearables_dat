@@ -54,4 +54,4 @@ The package exposes a single static facade, `MetaWearablesDat`, that delegates t
 - [Meta Wearables Developer Center](https://wearables.developer.meta.com/): registration, app IDs, client tokens.
 - [Meta's AI-Assisted Development guide](https://wearables.developer.meta.com/docs/ai-assisted)
 
-DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests and new experimental capabilities are not exposed.
+DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests remain unexposed. Experimental camera audio is available on iOS; Android audio, motion, inputs, speech, and standalone photo capabilities remain unexposed.

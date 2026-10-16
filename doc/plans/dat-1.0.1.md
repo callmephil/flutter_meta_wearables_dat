@@ -86,7 +86,7 @@ Upgrade in place first, preserving existing app data. Record platform, device/gl
 - Initial publish dry-runs: only expected modified-file warnings (exit 65), compressed archives 12 MB core / 2 MB mock. Clean-commit reruns both passed with zero warnings (exit 0).
 - CocoaPods unsigned release consumer build passed (31.5 MB), with both 1.0.1 plugins present in Podfile.lock.
 - Android release APK built successfully (68.9 MB); existing Flutter warnings flag future AGP/Kotlin support deprecations. No toolchain change was made.
-- Android JUnit reports: 8 AppForegroundTracker tests and 2 PhotoSharing tests, all passed with zero skips. Independent PR review pending.
+- Android JUnit reports: 8 AppForegroundTracker tests and 2 PhotoSharing tests, all passed with zero skips. Independent review round 1 found no code or packaging blocker; its two stale audio-documentation findings were confirmed against the shipped audio API and corrected. A fresh review of the corrected head is required; final CI/review status is reported with the PR handoff.
 - Global SwiftPM setting restored to its original `true` immediately after scaffolding the CocoaPods consumer, whose own pubspec now pins `false`.
 
 ## Workflow improvements

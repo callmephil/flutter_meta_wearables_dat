@@ -628,7 +628,7 @@ point.
 **Notes and limitations:**
 
 - **On-device muxing.** The plugin gives you raw frame bytes — muxing into mp4/mov is the host app's responsibility. For hvc1 on iOS this is usually a one-liner with `ffmpeg_kit_flutter`; for raw you'll want to transcode first.
-- **Audio.** The iOS `AVAudioSession` is activated purely as a keep-alive. Microphone samples are not forwarded to Dart.
+- **Audio.** The iOS `AVAudioSession` provides background keep-alive. Optional glasses microphone samples arrive separately through `audioFramesStream()` when the camera session starts with `audio: true` and microphone permission is granted.
 - **`captureStreamFrame`.** Rasterizes via the Flutter engine, which needs GPU access. Returns `null` while the app is backgrounded — use `videoFramesStream()` instead if you need pixel data in background.
 - **Remember to disable.** `disableBackgroundStreaming()` tears down the `AVAudioSession` on iOS and stops the foreground service on Android. Calling it is idempotent and safe.
 
@@ -802,4 +802,4 @@ Contributions are welcome! Feel free to open [issues](https://github.com/rodcone
 
 MIT License — see [LICENSE](LICENSE) for details.
 
-DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests and new experimental capabilities are not exposed.
+DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests remain unexposed. Experimental camera audio is available on iOS; Android audio, motion, inputs, speech, and standalone photo capabilities remain unexposed.

@@ -71,7 +71,7 @@ Subscribe BEFORE starting operations. Cancel in dispose(). Always handle errors.
 
 See AGENTS.md at repository root for complete API signatures, configuration XML/Kotlin snippets, and debugging guide.
 
-DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests and new experimental capabilities are not exposed.
+DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests remain unexposed. Experimental camera audio is available on iOS; Android audio, motion, inputs, speech, and standalone photo capabilities remain unexposed.
 
 ### Optional iOS microphone audio (1.0.1)
 

@@ -47,7 +47,7 @@ final frame = await MetaWearablesDat.captureStreamFrame(textureId); // ~3.7MB RG
 
 See `example/lib/providers/stream_provider.dart` for canonical pattern.
 
-DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests and new experimental capabilities are not exposed.
+DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests remain unexposed. Experimental camera audio is available on iOS; Android audio, motion, inputs, speech, and standalone photo capabilities remain unexposed.
 
 ### Optional iOS microphone audio (1.0.1)
 
