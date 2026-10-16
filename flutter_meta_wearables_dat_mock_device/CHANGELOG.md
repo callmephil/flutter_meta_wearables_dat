@@ -1,3 +1,7 @@
+## 1.0.1
+
+- Upgrade MockDeviceKit to DAT 1.0.1 on iOS and Android, in lockstep with the core plugin. No mock Dart API changes.
+
 ## 1.0.0
 
 - Promote 1.0.0-rc.1 to stable 1.0.0 in lockstep with the core plugin; no runtime changes.

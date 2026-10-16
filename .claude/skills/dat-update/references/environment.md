@@ -192,8 +192,10 @@ For SourceKitten, use `source.request.editor.open.interface` with quoted string 
 `key.name` and `key.modulename`, `key.synthesizedextensions: 1`, and compiler arguments `-sdk`
 (the `xcrun --sdk iphoneos --show-sdk-path` result), `-target arm64-apple-ios17.2`, and `-F` for
 each staged framework's `ios-arm64` directory. Keep the request kind as a YAML UID (unquoted).
-Read `key.sourcetext` from the JSON response, validate doc comments and declarations, and preserve
-the existing reference-snapshot header before writing the tracked dump.
+Write the request to a scratch `.yaml` file and pass its path to
+`sourcekitten request --yaml <request.yaml>`. Read `key.sourcetext` from the JSON response,
+validate doc comments and declarations, and preserve the existing reference-snapshot header
+before writing the tracked dump.
 
 A changelog can omit removed enum cases or inserted constructor parameters: DAT 1.0 removed iOS
 registration timeout cases and inserted Android StreamConfiguration.audioCodec. Compare the
@@ -221,3 +223,13 @@ Record removal (doff) separately from folding: do not assume both end the stream
 firmware. DAT 1.0.0 QA on Meta Ray-Ban Display observed continued streaming after removal and
 successful terminal cleanup after folding. Preserve repeated failures alongside passing attempts;
 one successful background/lock cycle does not clear an intermittent session termination.
+
+## Reference-clone history divergence
+
+If preflight cannot fast-forward a reference clone, stop and inspect **both** clones
+with `git status --short --branch`, `git log --left-right HEAD...@{upstream}` and
+`git reflog`. Upstream can replace a release commit; a local ahead count does not
+by itself prove local authored work. Report all affected clones together. After
+explicit maintainer authorization, preserve each old HEAD on a backup branch before
+aligning a clean clone with upstream, then rerun preflight. Never auto-reset or
+stash a dirty reference clone.

@@ -35,16 +35,27 @@ branch has only sources and samples). If you have the repo cloned at
 `doc/ios/meta-wearables-dat-ios` (gitignored), steps 1 and 2 collapse into:
 
 ```bash
-IOS=doc/ios/meta-wearables-dat-ios
-MOCK=flutter_meta_wearables_dat_mock_device/ios/flutter_meta_wearables_dat_mock_device/Frameworks
-(cd $IOS && git fetch --tags)
+ROOT="$(git rev-parse --show-toplevel)"
+IOS="$ROOT/doc/ios/meta-wearables-dat-ios"
+CORE="$ROOT/ios/flutter_meta_wearables_dat/Frameworks"
+MOCK="$ROOT/flutter_meta_wearables_dat_mock_device/ios/flutter_meta_wearables_dat_mock_device/Frameworks"
+VERSION=1.0.1 # Set the explicitly selected DAT version.
+STAGE="$(mktemp -d)"
+git -C "$IOS" fetch --tags
+git -C "$IOS" archive "$VERSION" \
+  MWDATCore.xcframework MWDATCamera.xcframework MWDATMockDevice.xcframework \
+  | tar -x -C "$STAGE"
 
-rm -rf ios/flutter_meta_wearables_dat/Frameworks/MWDAT{Core,Camera}.xcframework
-rm -rf $MOCK/MWDATMockDevice.xcframework
-
-(cd $IOS && git archive <version> MWDATCore.xcframework MWDATCamera.xcframework) \
-  | tar -x -C ios/flutter_meta_wearables_dat/Frameworks/
-(cd $IOS && git archive <version> MWDATMockDevice.xcframework) | tar -x -C $MOCK
+# Validate extraction before deleting any tracked framework.
+for fw in MWDATCore MWDATCamera MWDATMockDevice; do
+  test -d "$STAGE/$fw.xcframework/ios-arm64" || exit 1
+  test -d "$STAGE/$fw.xcframework/ios-arm64_x86_64-simulator" || exit 1
+done
+rm -rf "$CORE/MWDATCore.xcframework" "$CORE/MWDATCamera.xcframework"
+rm -rf "$MOCK/MWDATMockDevice.xcframework"
+mv "$STAGE/MWDATCore.xcframework" "$STAGE/MWDATCamera.xcframework" "$CORE/"
+mv "$STAGE/MWDATMockDevice.xcframework" "$MOCK/"
+rmdir "$STAGE"
 ```
 
 Verified byte-identical to the published archives. Continue at step 2b.
@@ -136,10 +147,10 @@ Update the version in **both** `build.gradle` files (each plugin owns its own `e
 
 ```groovy
 // android/build.gradle (core)
-ext.mwdat_version = "0.9.0"  // mwdat-core, mwdat-camera
+ext.mwdat_version = "1.0.1"  // mwdat-core, mwdat-camera
 
 // flutter_meta_wearables_dat_mock_device/android/build.gradle
-ext.mwdat_version = "0.9.0"  // mwdat-mockdevice
+ext.mwdat_version = "1.0.1"  // mwdat-mockdevice
 ```
 
 Keep the two values in sync — mixing versions across the two plugins risks ABI breakage at runtime.

@@ -23,7 +23,7 @@ Stream not starting?
 ├── On Android: MainActivity extends FlutterFragmentActivity?
 │   └── FlutterActivity will NOT work — permission sheets fail
 ├── On Android: Maven Central configured?
-│   └── DAT 1.0.0 needs mavenCentral(), no token
+│   └── DAT 1.0.x needs mavenCentral(), no token
 └── Try restarting glasses:
     1. Power switch OFF
     2. Press and hold capture button
@@ -81,7 +81,7 @@ Do **not** tear down on `thermalCritical` / `deviceThermalCritical`: those pause
 ## Android-specific issues
 
 - **FlutterFragmentActivity required:** `FlutterActivity` does not extend `ComponentActivity`, so `ActivityResultLauncher` cannot register. Camera permissions will fail silently.
-- **Dependency resolution:** DAT 1.0.0 uses Maven Central; no GitHub token is required.
+- **Dependency resolution:** DAT 1.0.x uses Maven Central; no GitHub token is required.
 - **SDK not initialized:** If `requestAndroidPermissions()` is not called (and granted) before other DAT calls, device discovery will not work.
 
 ## iOS-specific issues
@@ -102,4 +102,4 @@ Do **not** tear down on `thermalCritical` / `deviceThermalCritical`: those pause
 - [FAQ](https://developers.meta.com/wearables/faq/)
 - [Report a bug](https://wearables.developer.meta.com/devcenter/feedback/)
 
-DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests and new experimental capabilities are not exposed.
+DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests remain unexposed. Experimental camera audio is available on iOS; Android audio, motion, inputs, speech, and standalone photo capabilities remain unexposed.

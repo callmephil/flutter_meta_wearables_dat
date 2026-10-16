@@ -690,7 +690,10 @@ public enum DeviceSessionError : MWDATCore.DatError, Equatable {
     /// The device battery has reached a critically low level.
     case batteryCritical
 
-    /// The app on the glasses needs an update before the session can start.
+    /// The app on the glasses needs an update before a session can start. Call
+    /// ``WearablesInterface/openDATGlassesAppUpdate()`` to open the appropriate update screen in the
+    /// Meta AI app. After the user completes the update, create a new session with
+    /// ``WearablesInterface/createSession(deviceSelector:)`` and call ``DeviceSession/start()``.
     case datAppOnTheGlassesUpdateRequired
 
     /// The companion component on the glasses is unavailable.

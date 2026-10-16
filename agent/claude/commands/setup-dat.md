@@ -33,7 +33,7 @@ Audit and configure this Flutter project for flutter_meta_wearables_dat integrat
    Report any missing entries and offer to add them.
 
 5. **Android Gradle audit** — Read `android/settings.gradle.kts` and verify:
-   - `mavenCentral()` repository for DAT 1.0.0 (no credentials needed)
+   - `mavenCentral()` repository for DAT 1.0.x (no credentials needed)
 
    Report if missing and offer to add it.
 

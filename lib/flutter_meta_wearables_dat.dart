@@ -156,9 +156,10 @@ class StreamSessionError {
   /// `internalError`, `deviceNotFound`, `deviceNotConnected`, `timeout`,
   /// `videoStreamingError`, `permissionDenied`, `hingesClosed`,
   /// `thermalCritical`, `peakPowerShutdown`, `batteryCritical`.
-  /// iOS also exposes `deviceNotFound` and `audioStreamingError` (audio streaming
-  /// is not enabled by this plugin). DAT 1.0 maps iOS `thermalHot`, `batteryLow`,
-  /// and `peakPowerLimit` to the existing cross-platform codes above.
+  /// iOS also exposes `deviceNotFound` and `audioStreamingError` (optional audio
+  /// is enabled with `startStreamSession(null, audio: true)`). DAT 1.0 maps iOS
+  /// `thermalHot`, `batteryLow`, and `peakPowerLimit` to the existing
+  /// cross-platform codes above.
   /// The legacy `thermalEmergency` code is no longer emitted by DAT 1.0;
   /// thermal emergencies arrive as `deviceThermalEmergency` on both platforms.
   ///

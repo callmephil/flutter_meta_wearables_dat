@@ -1,6 +1,8 @@
-## Unreleased
+## 1.0.1
 
-- iOS: carry the glasses' microphone on the camera stream. `startStreamSession(audio: true)` asks DAT for 16 kHz mono PCM, delivered as `Uint8List` through the new `audioFramesStream()`, in the foreground and, with background streaming enabled, in the background. New `requestMicrophonePermission()` / `getMicrophonePermissionStatus()`. Android ignores `audio` for now.
+- Upgrade Meta Wearables DAT to 1.0.1 on iOS and Android. Android includes upstream fixes for HEVC buffer corruption and stream lag/stutter; iOS has no developer-facing SDK changes. The known intermittent iOS locked-background session termination remains unresolved.
+- Android example: normalize photo orientation and share captures as JPEG, including EXIF rotation/mirroring (#52). Original plugin capture bytes are unchanged.
+- iOS (#50): carry the glasses' microphone on the camera stream. `startStreamSession(audio: true)` asks DAT for 16 kHz mono PCM, delivered as `Uint8List` through the new `audioFramesStream()`, in the foreground and, with background streaming enabled, in the background. New `requestMicrophonePermission()` / `getMicrophonePermissionStatus()`. Android ignores `audio` for now.
 - iOS: reject starts with `STREAM_ACTIVE` throughout stream and device-session teardown, so an overlapping start cannot reuse a texture being released.
 - iOS: discard queued microphone frames when the audio subscription is cancelled or replaced, preventing stale audio from reaching a later listener.
 

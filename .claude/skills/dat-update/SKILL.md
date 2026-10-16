@@ -52,7 +52,7 @@ Applied every release unless the maintainer says otherwise:
   duplicates `StreamState` — deliberately unexposed).
 - **Both packages move in lockstep** at the same plugin version.
 - **Select the plugin version explicitly.** Follow the maintainer's release target, including
-  prerelease suffixes. This migration targets `1.0.0-rc.1` for both packages with DAT `1.0.0`.
+  prerelease suffixes. Record that target in this run's plan; do not hardcode a prior release here.
   SDK and plugin versions need not match on future releases; preserve plugin semver compatibility.
   RC install snippets must opt into the prerelease, CI must compare the suffix, and GitHub releases
   must be marked prerelease. The no-tag/no-publish rule applies to RCs too.

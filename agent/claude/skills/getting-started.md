@@ -117,7 +117,7 @@ dependencyResolutionManagement {
 
 Use `PREFER_SETTINGS` (not `FAIL_ON_PROJECT_REPOS`) because Flutter's Gradle plugin adds repositories at the project level.
 
-DAT 1.0.0 uses Maven Central; no GitHub Packages token is required.
+DAT 1.0.x uses Maven Central; no GitHub Packages token is required.
 
 **MainActivity** — Must extend `FlutterFragmentActivity`:
 
