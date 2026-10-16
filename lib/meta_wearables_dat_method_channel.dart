@@ -50,7 +50,7 @@ class MethodChannelMetaWearablesDat extends MetaWearablesDatPlatform {
   );
 
   /// The event channel used to receive the glasses' microphone audio while a
-  /// stream started with `audio: true` is running (iOS).
+  /// stream started with `audio: true` is running (iOS and Android).
   @visibleForTesting
   final audioFramesEventChannel = const EventChannel(
     'flutter_meta_wearables_dat/audio_frames',

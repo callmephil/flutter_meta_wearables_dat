@@ -172,12 +172,11 @@ errorSub.cancel();
 
 See `example/lib/providers/stream_provider.dart` for the canonical pattern.
 
-### Optional iOS microphone audio (1.0.1)
+### Optional microphone audio (iOS and Android, since 1.0.1)
 
 Request `MetaWearablesDat.requestMicrophonePermission()`, subscribe to
 `audioFramesStream()`, then use `startStreamSession(null, audio: true)`. Audio is
 16-bit little-endian mono PCM at 16 kHz; cancel the subscription in `dispose()`.
 Background delivery requires `enableBackgroundStreaming()` before starting.
-Android ignores `audio`; audio and microphone-permission methods are not
-implemented there. Guard those calls to iOS. DAT camera audio is experimental
-and subject to Meta's publishing restrictions.
+Both platforms support this API. Check the permission result before starting.
+DAT camera audio is limited to development and beta release channels, not production.

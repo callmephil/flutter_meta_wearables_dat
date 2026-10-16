@@ -13,7 +13,7 @@ import com.meta.wearable.dat.camera.Stream
 import com.meta.wearable.dat.camera.addCamera
 import com.meta.wearable.dat.camera.types.CaptureError
 import com.meta.wearable.dat.camera.types.PhotoData
-import com.meta.wearable.dat.camera.types.StreamConfiguration
+import com.meta.wearable.dat.camera.types.StreamState
 import com.meta.wearable.dat.camera.types.VideoQuality
 import com.meta.wearable.dat.core.Wearables
 import com.meta.wearable.dat.core.selectors.AutoDeviceSelector
@@ -35,9 +35,9 @@ import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
 import io.flutter.view.TextureRegistry
 import java.io.ByteArrayOutputStream
-import kotlin.coroutines.resume
-import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -47,10 +47,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 /** MetaWearablesDatPlugin */
 class MetaWearablesDatPlugin :
@@ -62,7 +60,6 @@ class MetaWearablesDatPlugin :
 
     companion object {
         private const val TAG = "MetaWearablesDat"
-        private const val PERMISSION_REQUEST_CODE = 48291
         private const val BT_PERMISSION_REQUEST_CODE = 48292
         private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 48294
         // Upper bound on how long we wait, after a camera-permission grant, for
@@ -101,6 +98,10 @@ class MetaWearablesDatPlugin :
     private var streamSessionErrorStreamHandler: StreamSessionErrorStreamHandler? = null
     private var videoStreamSizeStreamHandler: VideoStreamSizeStreamHandler? = null
     private val videoFrameStreamHandler = VideoFrameStreamHandler()
+    private val audioFrameStreamHandler = AudioFrameStreamHandler()
+    private lateinit var audioFramesChannel: EventChannel
+    private var audioJob: Job? = null
+    private var streamAudioEnabled = false
     private var deviceStateStreamHandler: DeviceStateStreamHandler? = null
     // Forward DeviceSession.errors (0.7.0 SharedFlow<DeviceSessionError>) onto
     // the same Flutter event channel that Stream.errorStream uses. Cancelled
@@ -125,9 +126,8 @@ class MetaWearablesDatPlugin :
     private var btPermissionsGranted = false
 
     // Permission request handling
-    private var permissionContinuation:
-        CancellableContinuation<DatResult<PermissionStatus, PermissionError>>? = null
-    private val permissionMutex = Mutex()
+    private val permissionRequests =
+            PermissionRequestCoordinator<DatResult<PermissionStatus, PermissionError>>()
     // Lazy so it isn't constructed at plugin load — the 0.6.0 SDK types
     // may touch `Wearables` internals and throw before `Wearables.initialize()`.
     private val permissionContract by lazy { Wearables.RequestPermissionContract() }
@@ -267,6 +267,11 @@ class MetaWearablesDatPlugin :
                         "flutter_meta_wearables_dat/video_frames",
                 )
         videoFramesChannel.setStreamHandler(videoFrameStreamHandler)
+        audioFramesChannel = EventChannel(
+                flutterPluginBinding.binaryMessenger,
+                "flutter_meta_wearables_dat/audio_frames",
+        )
+        audioFramesChannel.setStreamHandler(audioFrameStreamHandler)
 
         deviceStateChannel =
                 EventChannel(
@@ -381,8 +386,10 @@ class MetaWearablesDatPlugin :
             "disconnect" -> disconnect(result)
             "getRegistrationState" -> getRegistrationState(result)
             "getDevices" -> getDevices(result)
-            "getCameraPermissionStatus" -> getCameraPermissionStatus(result)
-            "requestCameraPermission" -> requestCameraPermission(result)
+            "getCameraPermissionStatus" -> getPermissionStatus(Permission.CAMERA, result)
+            "getMicrophonePermissionStatus" -> getPermissionStatus(Permission.MICROPHONE, result)
+            "requestMicrophonePermission" -> requestPermission(Permission.MICROPHONE, result)
+            "requestCameraPermission" -> requestPermission(Permission.CAMERA, result)
             "handleUrl" -> handleUrl(call, result)
             // Internal cross-plugin bridge — invoked by
             // `flutter_meta_wearables_dat_mock_device` over the shared
@@ -429,6 +436,9 @@ class MetaWearablesDatPlugin :
         videoStreamSizeStreamHandler = null
         videoFramesChannel.setStreamHandler(null)
         videoFrameStreamHandler.dispose()
+        audioFramesChannel.setStreamHandler(null)
+        audioFrameStreamHandler.dispose()
+        permissionRequests.abort("Flutter engine detached.")
         deviceStateChannel.setStreamHandler(null)
         deviceStateStreamHandler?.dispose()
         deviceStateStreamHandler = null
@@ -478,6 +488,7 @@ class MetaWearablesDatPlugin :
     }
 
     override fun onDetachedFromActivity() {
+        permissionRequests.abort("Activity detached before permission completed.")
         activityBinding?.removeActivityResultListener(this)
         activityBinding?.removeRequestPermissionsResultListener(this)
         activityBinding = null
@@ -489,15 +500,12 @@ class MetaWearablesDatPlugin :
     // region ActivityResultListener
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
-        if (requestCode != PERMISSION_REQUEST_CODE) return false
-        // Carry the full DatResult through so the caller can distinguish a
-        // user-initiated denial (PermissionStatus.Denied) from a contract
-        // failure (NO_DEVICE, REQUEST_TIMEOUT, …). Collapsing both to
-        // PermissionStatus.Denied here would silently lie to the Dart layer,
-        // which now treats `false` as "user denied" exclusively.
-        val parseResult = permissionContract.parseResult(resultCode, data)
-        permissionContinuation?.resume(parseResult)
-        permissionContinuation = null
+        if (!permissionRequests.accepts(requestCode)) return false
+        try {
+            permissionRequests.complete(requestCode, permissionContract.parseResult(resultCode, data))
+        } catch (error: Exception) {
+            permissionRequests.abort(error.message ?: "Invalid permission response.")
+        }
         return true
     }
 
@@ -602,24 +610,27 @@ class MetaWearablesDatPlugin :
         )
     }
 
-    private fun getCameraPermissionStatus(result: Result) {
+    private fun getPermissionStatus(permission: Permission, result: Result) {
         scope.launch {
             try {
                 ensureWearablesInitialized()
-                val status = checkCameraPermissionStatus(result) ?: return@launch
+                val status = checkPermissionStatus(permission, result) ?: return@launch
                 result.success(status == PermissionStatus.Granted)
             } catch (e: Exception) {
                 result.error(
                         "INTERNAL_ERROR",
-                        e.message ?: "Failed to check camera permission status.",
+                        e.message ?: "Failed to check $permission permission status.",
                         null
                 )
             }
         }
     }
 
-    private suspend fun checkCameraPermissionStatus(result: Result): PermissionStatus? {
-        val checkResult = Wearables.checkPermissionStatus(Permission.CAMERA)
+    private suspend fun checkPermissionStatus(
+            permission: Permission,
+            result: Result,
+    ): PermissionStatus? {
+        val checkResult = Wearables.checkPermissionStatus(permission)
         var failure: PermissionError? = null
         checkResult.onFailure { error, _ -> failure = error }
         val err = failure
@@ -652,20 +663,22 @@ class MetaWearablesDatPlugin :
     }
 
     /**
-     * Request camera permission from the wearable device. Uses startActivityForResult with the DAT
-     * SDK's RequestPermissionContract to show the Meta AI permission bottom sheet.
+     * Request camera or microphone permission through the DAT activity-result contract.
+     * Both requests share one mutex so they cannot overwrite a pending Meta AI result.
      */
-    private fun requestCameraPermission(result: Result) {
+    private fun requestPermission(permission: Permission, result: Result) {
         scope.launch {
-            permissionMutex.withLock {
-                try {
+            try {
+                permissionRequests.serialized {
                     ensureWearablesInitialized()
 
-                    val currentStatus = checkCameraPermissionStatus(result) ?: return@withLock
+                    val currentStatus = checkPermissionStatus(permission, result) ?: return@serialized
                     if (currentStatus == PermissionStatus.Granted) {
-                        awaitDeviceAfterPermissionGrant(returnEarlyIfNoDevices = true)
+                        if (permission == Permission.CAMERA) {
+                            awaitDeviceAfterPermissionGrant(returnEarlyIfNoDevices = true)
+                        }
                         result.success(true)
-                        return@withLock
+                        return@serialized
                     }
 
                     val act = activity
@@ -675,20 +688,15 @@ class MetaWearablesDatPlugin :
                                 "Activity is not available. Ensure the app is in the foreground.",
                                 null
                         )
-                        return@withLock
+                        return@serialized
                     }
 
-                    val parseResult =
-                            suspendCancellableCoroutine<
-                                DatResult<PermissionStatus, PermissionError>
-                            > { continuation ->
-                                permissionContinuation = continuation
-                                continuation.invokeOnCancellation { permissionContinuation = null }
-                                val intent = permissionContract.createIntent(act, Permission.CAMERA)
-                                act.startActivityForResult(intent, PERMISSION_REQUEST_CODE)
-                            }
+                    val parseResult = permissionRequests.request { requestCode ->
+                        val intent = permissionContract.createIntent(act, permission)
+                        act.startActivityForResult(intent, requestCode)
+                    }
 
-                    // Mirror checkCameraPermissionStatus: contract failures
+                    // Mirror checkPermissionStatus: contract failures
                     // (NO_DEVICE, REQUEST_TIMEOUT, …) become typed errors via
                     // mapPermissionError; only an explicit PermissionStatus.Denied
                     // result returns `false` to the Dart layer.
@@ -701,11 +709,11 @@ class MetaWearablesDatPlugin :
                                 err.description,
                                 mapOf("errorType" to err.name),
                         )
-                        return@withLock
+                        return@serialized
                     }
                     val permissionStatus =
                             parseResult.getOrNull() ?: PermissionStatus.Denied
-                    if (permissionStatus == PermissionStatus.Granted) {
+                    if (permissionStatus == PermissionStatus.Granted && permission == Permission.CAMERA) {
                         // The grant brings the glasses (back) into the SDK device
                         // flow. Re-kick monitoring and wait (bounded) for the
                         // selector to resolve a device so the app's next
@@ -713,13 +721,9 @@ class MetaWearablesDatPlugin :
                         awaitDeviceAfterPermissionGrant()
                     }
                     result.success(permissionStatus == PermissionStatus.Granted)
-                } catch (e: Exception) {
-                    result.error(
-                            "INTERNAL_ERROR",
-                            e.message ?: "Failed to request permission.",
-                            null
-                    )
                 }
+            } catch (e: Exception) {
+                result.error("INTERNAL_ERROR", e.message ?: "Failed to request permission.", null)
             }
         }
     }
@@ -1170,10 +1174,23 @@ class MetaWearablesDatPlugin :
         val streamQuality = parseStreamQuality(args?.get("streamQuality") as? String)
         val videoCodec = args?.get("videoCodec") as? String
         val deviceId = args?.get("deviceId") as? String
+        val audioEnabled = args?.get("audio") as? Boolean ?: false
         val key = deviceId ?: "auto"
 
         if (videoCodec != null && videoCodec != "raw") {
             Log.d(TAG, "videoCodec '$videoCodec' ignored on Android (only raw I420 supported)")
+        }
+
+        // Reject a concurrent start: a second start that tore down the first's
+        // in-flight session (on a pin change) would leave the first awaiting
+        // STARTED forever.
+        if (startInProgress) {
+            result.error(
+                    "STREAM_ACTIVE",
+                    "A stream start is already in progress.",
+                    null,
+            )
+            return
         }
 
         // A non-nil `stream` only counts as active if it's not terminal: the SDK
@@ -1220,6 +1237,10 @@ class MetaWearablesDatPlugin :
                     )
                     return
                 }
+                if (audioEnabled != streamAudioEnabled) {
+                    result.error("STREAM_ACTIVE", "Stop the stream before changing audio configuration.", null)
+                    return
+                }
                 if (!stalled) {
                     val entry = textureEntry
                     if (entry != null) {
@@ -1240,17 +1261,6 @@ class MetaWearablesDatPlugin :
             teardownStreamOnly()
         }
 
-        // Reject a concurrent start: a second start that tore down the first's
-        // in-flight session (on a pin change) would leave the first awaiting
-        // STARTED forever.
-        if (startInProgress) {
-            result.error(
-                    "STREAM_ACTIVE",
-                    "A stream start is already in progress.",
-                    null,
-            )
-            return
-        }
         startInProgress = true
 
         scope.launch {
@@ -1316,7 +1326,7 @@ class MetaWearablesDatPlugin :
                 // `Camera` owns the stream.
                 var addedCamera: Camera? = null
                 activeSession
-                        .addCamera(StreamConfiguration(videoQuality = streamQuality, frameRate = fps))
+                        .addCamera(cameraStreamConfiguration(streamQuality, fps, audioEnabled))
                         .onSuccess { addedCamera = it }
                         .onFailure { error, _ ->
                             val code =
@@ -1339,6 +1349,38 @@ class MetaWearablesDatPlugin :
 
                 camera = newCamera
                 stream = newStream
+                streamAudioEnabled = audioEnabled
+                val audioSession = audioFrameStreamHandler.beginSession()
+                if (audioEnabled) {
+                    // Subscribe before start(), while keeping subsequent collection off main.
+                    audioJob = scope.launch(
+                            Dispatchers.Default,
+                            start = CoroutineStart.UNDISPATCHED,
+                    ) {
+                        try {
+                            newStream.audioStream.collect { frame ->
+                                audioFrameStreamHandler.emit(audioSession, frame.buffer) {
+                                    stream === newStream && newStream.state.value.let {
+                                        it != StreamState.STOPPING &&
+                                                it != StreamState.STOPPED &&
+                                                it != StreamState.CLOSED
+                                    }
+                                }
+                            }
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
+                        } catch (error: Exception) {
+                            withContext(Dispatchers.Main.immediate) {
+                                if (stream === newStream) {
+                                    streamSessionErrorStreamHandler?.sendError(
+                                            "audioStreamingError",
+                                            error.message ?: "Audio frame delivery failed.",
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
                 streamStateStreamHandler?.stream = newStream
                 videoFrameStreamHandler.resetSessionState()
 
@@ -1788,6 +1830,11 @@ class MetaWearablesDatPlugin :
     // endregion
 
     private fun teardownStreamOnlyLocked() {
+        // Invalidate before cancellation: an SDK callback may already be copying a buffer.
+        audioFrameStreamHandler.endSession()
+        audioJob?.cancel()
+        audioJob = null
+        streamAudioEnabled = false
         cancelFrameWatchdog()
         videoJob?.cancel()
         videoJob = null

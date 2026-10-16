@@ -102,4 +102,4 @@ Do **not** tear down on `thermalCritical` / `deviceThermalCritical`: those pause
 - [FAQ](https://developers.meta.com/wearables/faq/)
 - [Report a bug](https://wearables.developer.meta.com/devcenter/feedback/)
 
-DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests remain unexposed. Experimental camera audio is available on iOS; Android audio, motion, inputs, speech, and standalone photo capabilities remain unexposed.
+DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests remain unexposed. Experimental camera audio is available on iOS and Android starting with plugin 1.0.1, in development/beta release channels only. Motion, inputs, speech, and standalone photo capabilities remain unexposed.

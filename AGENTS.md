@@ -89,7 +89,7 @@ Communication:
 | `stoppedForBackground` | The app was backgrounded without background streaming enabled, so the plugin ended the session on purpose. A terminal `stopped` follows. Not a fault |
 | `insufficientSDKVersion` | Terminal: the app must update to a supported DAT SDK. Do not retry the same session. |
 | `dwaOutOfStuRange` | Nonblocking compatibility warning; keep streaming and optionally suggest an app update. |
-| `audioStreamingError` | iOS SDK audio error; optional camera audio is enabled with `startStreamSession(null, audio: true)`. |
+| `audioStreamingError` | iOS SDK audio error or Android audio collector failure; optional camera audio is enabled with `startStreamSession(null, audio: true)`. |
 | `frameStalled` | The stream still reports `streaming` but no frame has arrived for ~1.5s — the preview is frozen. Raised by the plugin, not the SDK. Recover with `stopStreamSession()` then `startStreamSession()`, and use the new texture ID |
 
 Photo-capture failure never appears here — it rejects the `capturePhoto()` future instead (`CAPTURE_PHOTO_FAILED`, with `details` carrying the granular reason).
@@ -126,14 +126,14 @@ static Future<int> startStreamSession(
   StreamFrameRate frameRate = StreamFrameRate.fps30,
   StreamQuality streamQuality = StreamQuality.high,
   VideoCodec videoCodec = VideoCodec.raw,
-  bool audio = false, // iOS only; microphone permission required
+  bool audio = false, // Both platforms; microphone permission required
 })  // Returns textureId. Throws PlatformException 'STREAM_ACTIVE' if a different device is already streaming
 static Future<bool> stopStreamSession(String? deviceId)
 static Stream<StreamSessionState> streamSessionStateStream()
 static Stream<StreamSessionError> streamSessionErrorStream()
 static Stream<VideoStreamSize> videoStreamSizeStream()
 
-// Optional glasses microphone audio (iOS only; guard calls to iOS)
+// Optional glasses microphone audio (development/beta release channels)
 static Future<bool> requestMicrophonePermission()
 static Future<bool> getMicrophonePermissionStatus()
 static Stream<Uint8List> audioFramesStream() // 16-bit little-endian PCM, mono, 16 kHz
@@ -426,15 +426,16 @@ final photo = await MetaWearablesDat.capturePhoto(null);
 await MetaWearablesDat.stopStreamSession(null);
 ```
 
-### Glasses microphone audio (iOS only, since 1.0.1)
+### Glasses microphone audio (iOS and Android, since 1.0.1)
 
 Request `MetaWearablesDat.requestMicrophonePermission()` before streaming, subscribe to
 `audioFramesStream()`, then call `startStreamSession(null, audio: true)`. Frames are
 16-bit little-endian PCM, mono, 16 kHz. Dispose the subscription when finished.
 With background streaming enabled, audio can continue alongside video in the background.
-Android ignores `audio`; microphone permission and audio-stream methods are not
-implemented there. Guard those calls to iOS. The SDK marks camera audio experimental; check Meta's
-current publishing restrictions before distributing an app that enables it.
+Both platforms support this API. Check the permission result before starting.
+DAT camera audio is limited to development and beta release channels, not production.
+Android uses DAT MICROPHONE permission and its connected-device transport, not
+phone RECORD_AUDIO capture. Stop before changing audio configuration.
 
 ### Background streaming (optional — both platforms, both codecs)
 
@@ -472,7 +473,7 @@ await MetaWearablesDat.disableBackgroundStreaming();
 
 **Android manifest:** nothing to change — the plugin manifest auto-merges `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE`, `WAKE_LOCK` permissions and the internal foreground service. `BackgroundNotification` is required on Android (the OS requires a visible notification for the foreground service).
 
-**How it works.** iOS activates an `AVAudioSession` (`.playAndRecord` / `.videoRecording` + `.mixWithOthers`) to keep the process scheduled. Bluetooth HFP is deliberately **not** requested: it exists for glasses-mic capture and would flip the glasses from A2DP to an 8 kHz SCO link that contends with the video transport. For glasses audio alongside video, use `startStreamSession(null, audio: true)` on iOS after microphone permission; this uses DAT audio without HFP. The HEVC hardware decoder is invalidated on background entry (iOS forbids GPU access while backgrounded) and lazily recreated on the first frame after foreground — there's a brief stall waiting for the next keyframe but no permanent freeze. While backgrounded, the raw hvc1 NAL bytes are still forwarded to `videoFramesStream()` for recording. Android starts a foreground service of type `connectedDevice` with the provided notification and holds a `PARTIAL_WAKE_LOCK` until you disable it.
+**How it works.** iOS activates an `AVAudioSession` (`.playAndRecord` / `.videoRecording` + `.mixWithOthers`) to keep the process scheduled. Bluetooth HFP is deliberately **not** requested: it exists for glasses-mic capture and would flip the glasses from A2DP to an 8 kHz SCO link that contends with the video transport. For glasses audio alongside video, use `startStreamSession(null, audio: true)` on either platform after microphone permission; this uses DAT audio without HFP. The HEVC hardware decoder is invalidated on background entry (iOS forbids GPU access while backgrounded) and lazily recreated on the first frame after foreground — there's a brief stall waiting for the next keyframe but no permanent freeze. While backgrounded, the raw hvc1 NAL bytes are still forwarded to `videoFramesStream()` for recording. Android starts a foreground service of type `connectedDevice` with the provided notification and holds a `PARTIAL_WAKE_LOCK` until you disable it.
 
 **Frames in background.** The `Texture` widget can't render in background (no GPU access). Subscribe to `videoFramesStream()` to receive every frame in both foreground and background — useful for recording, ML, re-muxing:
 
@@ -518,6 +519,7 @@ final frame = await MetaWearablesDat.captureStreamFrame(
 | Video codec `raw` | Yes (BGRA on the `videoFramesStream`) | Yes (I420 planar YUV on the `videoFramesStream`) |
 | Video codec `hvc1` | Yes — decoder auto-paused on background and recreated on foreground (brief keyframe-wait stall) | No (ignored, falls back to raw) |
 | `enableBackgroundStreaming()` | Activates `AVAudioSession` to keep the process alive in background. HEVC hardware decoder is invalidated on background and recreated on foreground (brief keyframe-wait stall, no freeze). Requires `audio` + `bluetooth-central` in `UIBackgroundModes` | Starts a foreground service (type `connectedDevice`) + holds a `PARTIAL_WAKE_LOCK`. Requires `BackgroundNotification`. Manifest permissions auto-merge |
+| `audioFramesStream()` | PCM16 mono 16 kHz; DAT development/beta channels | PCM16 mono 16 kHz; DAT development/beta channels (since 1.0.1) |
 | `videoFramesStream()` | Emits BGRA (`raw`) or HEVC NAL units (`hvc1`) | Emits I420 planar YUV (`raw` only) |
 | `requestAndroidPermissions()` | No-op | Required before any DAT call |
 | `restartActiveDeviceMonitoring()` | No-op | Required after registration |
