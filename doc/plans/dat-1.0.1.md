@@ -83,7 +83,7 @@ Upgrade in place first, preserving existing app data. Record platform, device/gl
 - All 85 staged iOS device-slice files match the copied 1.0.1 payload byte-for-byte; framework plists report 1.0.1; device/simulator slices are arm64 and the floor remains 17.2.
 - All 25 distinct Android SDK imports exist in 1.0.1 AARs, including the top-level CameraKt.addCamera function.
 - CI install-snippet check passed: 12 constraints across 30 documents.
-- Initial publish dry-runs: only expected modified-file warnings (exit 65), compressed archives 12 MB core / 2 MB mock. Clean-commit reruns pending.
+- Initial publish dry-runs: only expected modified-file warnings (exit 65), compressed archives 12 MB core / 2 MB mock. Clean-commit reruns both passed with zero warnings (exit 0).
 - CocoaPods unsigned release consumer build passed (31.5 MB), with both 1.0.1 plugins present in Podfile.lock.
 - Android release APK built successfully (68.9 MB); existing Flutter warnings flag future AGP/Kotlin support deprecations. No toolchain change was made.
 - Android JUnit reports: 8 AppForegroundTracker tests and 2 PhotoSharing tests, all passed with zero skips. Independent PR review pending.
