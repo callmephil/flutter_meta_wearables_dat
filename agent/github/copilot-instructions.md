@@ -71,14 +71,13 @@ Subscribe BEFORE starting operations. Cancel in dispose(). Always handle errors.
 
 See AGENTS.md at repository root for complete API signatures, configuration XML/Kotlin snippets, and debugging guide.
 
-DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests remain unexposed. Experimental camera audio is available on iOS; Android audio, motion, inputs, speech, and standalone photo capabilities remain unexposed.
+DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests remain unexposed. Experimental camera audio is available on iOS and Android (Android support is unreleased), in development/beta release channels only. Motion, inputs, speech, and standalone photo capabilities remain unexposed.
 
-### Optional iOS microphone audio (1.0.1)
+### Optional microphone audio (iOS 1.0.1; Android unreleased)
 
 Request `MetaWearablesDat.requestMicrophonePermission()`, subscribe to
 `audioFramesStream()`, then use `startStreamSession(null, audio: true)`. Audio is
 16-bit little-endian mono PCM at 16 kHz; cancel the subscription in `dispose()`.
 Background delivery requires `enableBackgroundStreaming()` before starting.
-Android ignores `audio`; audio and microphone-permission methods are not
-implemented there. Guard those calls to iOS. DAT camera audio is experimental and subject to Meta's
-publishing restrictions.
+Both platforms support this API. Check the permission result before starting.
+DAT camera audio is limited to development and beta release channels, not production.

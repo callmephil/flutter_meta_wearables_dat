@@ -1,3 +1,9 @@
+## Unreleased
+
+* Add Android glasses microphone streaming through the existing `audio: true`, `audioFramesStream()`, and microphone-permission APIs (16 kHz mono PCM16). DAT in-stream audio requires a development or beta release channel on both platforms.
+* Serialize Android camera/microphone permission requests and bound activity-result waits; reject stale permission results after timeout or cancellation.
+* Preserve ordered Android PCM delivery on the platform thread and discard pending audio on listener cancellation, session replacement, or teardown. Stop before changing audio configuration.
+
 ## 1.0.1
 
 - Upgrade Meta Wearables DAT to 1.0.1 on iOS and Android. Android includes upstream fixes for HEVC buffer corruption and stream lag/stutter; iOS has no developer-facing SDK changes. The known intermittent iOS locked-background session termination remains unresolved.

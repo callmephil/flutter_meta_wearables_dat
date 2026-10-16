@@ -644,46 +644,48 @@ Valid FPS values: 2, 7, 15, 24, 30. Defaults: `StreamQuality.high` at 30 FPS wit
 
 Bandwidth is adaptive: on a constrained link the SDK first steps the resolution down one tier, then reduces the frame rate (never below 15 FPS), and applies per-frame compression throughout — so a stream can report `high` yet look soft. Requesting a lower resolution or FPS often yields *better* visual quality on a constrained link.
 
-#### Microphone audio (iOS)
+#### Microphone audio (iOS and Android)
 
-Available since plugin 1.0.1. DAT marks camera audio experimental; it remains
-subject to Meta's [publishing restrictions](#publishing-and-availability).
+Available on iOS since 1.0.1; Android support is unreleased. **Beta:** Meta supports
+in-stream audio only in development and beta [release channels](https://wearables.developer.meta.com/docs/develop/dat/set-up-release-channels/), not production channels.
 
-The glasses' microphones can ride on the camera stream as 16-bit PCM, mono,
-16 kHz. Ask for the microphone permission once (it opens Meta AI and comes back
-through your app link, like the camera permission), then start the stream with
-`audio: true` and listen to `audioFramesStream()`:
+The camera stream can carry glasses microphone audio as 16-bit little-endian
+PCM, mono, 16 kHz. Request Meta's microphone permission and subscribe before
+starting. A denial returns `false`; transport or SDK failures throw a
+`PlatformException`. On Android, call `requestAndroidPermissions()` first.
 
 ```dart
-if (!await MetaWearablesDat.getMicrophonePermissionStatus()) {
-  await MetaWearablesDat.requestMicrophonePermission();
-}
+await MetaWearablesDat.requestAndroidPermissions(); // No-op on iOS.
+final granted = await MetaWearablesDat.requestMicrophonePermission();
+if (!granted) return; // Explain the denial; do not start audio capture.
 
 final audio = MetaWearablesDat.audioFramesStream().listen((pcm) {
   // pcm: Uint8List of little-endian Int16 samples, mono, 16 kHz.
   speechRecognizer.add(pcm);
 });
-
-await MetaWearablesDat.startStreamSession(null, audio: true);
+try {
+  await MetaWearablesDat.startStreamSession(null, audio: true);
+  // Use the stream; await stopStreamSession(null) when finished.
+} catch (_) {
+  await audio.cancel();
+  rethrow;
+}
+// Also cancel `audio` when stopping or disposing the consumer.
 ```
 
-Why use it rather than the phone's audio input with the glasses as a Bluetooth
-headset:
+This uses DAT's glasses connection, not the phone microphone or HFP, and leaves
+A2DP routing unchanged. The plugin does not add `RECORD_AUDIO` or a `microphone`
+foreground service on Android. It retains the `connectedDevice` service used for
+DAT transport. Apps that separately record the phone microphone must configure
+Android recording permissions and service requirements for that separate path.
 
-- **It works from the background.** iOS refuses to start an `AVAudioSession`
-  recording while the app is backgrounded, so an app woken in the background
-  (for example by a "Hey Meta" voice invocation) cannot open the microphone.
-  This audio never touches the phone's audio input, and with background
-  streaming enabled it keeps arriving while the app is backgrounded or the
-  phone is locked.
-- **Better quality, no route change.** The hands-free (HFP) link is 8 kHz and
-  switches the glasses out of A2DP while it is open; this is 16 kHz and leaves
-  the media route alone.
-
-The audio needs the camera stream to be running (it is part of it), and the
-permission needs the glasses connected; `getMicrophonePermissionStatus()`
-reads `false` while they are not. Android is not implemented yet: `audio` is
-ignored there and the microphone methods are not available.
+Audio is off by default and requires an active camera stream. Stop and restart
+to change audio configuration; Android rejects a change on an active stream with
+`STREAM_ACTIVE`. With background streaming enabled **before starting**, audio can
+continue alongside video; device/firmware interruptions remain possible. On iOS,
+permission callbacks use the app link; Android uses the activity result. Status
+checks return `false` for no connected device on iOS, but Android reports
+`DEVICE_DISCONNECTED` for SDK connection failures.
 
 #### Accessing raw frame bytes
 
@@ -802,4 +804,4 @@ Contributions are welcome! Feel free to open [issues](https://github.com/rodcone
 
 MIT License — see [LICENSE](LICENSE) for details.
 
-DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests remain unexposed. Experimental camera audio is available on iOS; Android audio, motion, inputs, speech, and standalone photo capabilities remain unexposed.
+DAT 1.0 compatibility: `insufficientSDKVersion` is terminal and requires an app update; `dwaOutOfStuRange` is a nonblocking warning and must not stop or restart the stream. The plugin retains app-initiated registration; Meta-AI-initiated registration requests remain unexposed. Experimental camera audio is available on iOS and Android (Android support is unreleased), in development/beta release channels only. Motion, inputs, speech, and standalone photo capabilities remain unexposed.

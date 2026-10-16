@@ -156,8 +156,9 @@ class StreamSessionError {
   /// `internalError`, `deviceNotFound`, `deviceNotConnected`, `timeout`,
   /// `videoStreamingError`, `permissionDenied`, `hingesClosed`,
   /// `thermalCritical`, `peakPowerShutdown`, `batteryCritical`.
-  /// iOS also exposes `deviceNotFound` and `audioStreamingError` (optional audio
-  /// is enabled with `startStreamSession(null, audio: true)`). DAT 1.0 maps iOS
+  /// iOS also exposes `deviceNotFound`. `audioStreamingError` reports iOS SDK
+  /// audio errors or Android audio collector failures (optional audio is enabled
+  /// with `startStreamSession(null, audio: true)`). DAT 1.0 maps iOS
   /// `thermalHot`, `batteryLow`, and `peakPowerLimit` to the existing
   /// cross-platform codes above.
   /// The legacy `thermalEmergency` code is no longer emitted by DAT 1.0;
@@ -797,13 +798,14 @@ class MetaWearablesDat {
   ///
   /// Pass `audio: true` to also carry the glasses' microphone on the stream,
   /// delivered through [audioFramesStream]. It needs the microphone
-  /// permission ([requestMicrophonePermission]). iOS only for now; Android
-  /// ignores it.
+  /// permission ([requestMicrophonePermission]) on both platforms. DAT limits
+  /// this beta capability to development and beta release channels.
   ///
   /// Throws a `PlatformException` with code `STREAM_ACTIVE` if a stream is
   /// already running on a *different* device — stop it first, then start.
   /// On iOS, also throws `STREAM_ACTIVE` while another start or teardown is
-  /// in progress. Await [stopStreamSession] before starting a new session.
+  /// in progress. Android also rejects changes to audio configuration on an
+  /// active stream. Await [stopStreamSession] before starting a new session.
   static Future<int> startStreamSession(
     String? deviceId, {
     StreamFrameRate frameRate = StreamFrameRate.fps30,
@@ -833,18 +835,21 @@ class MetaWearablesDat {
   /// arriving while the app is backgrounded, which the phone's own audio input
   /// does not: iOS refuses to start an `AVAudioSession` recording from the
   /// background. It also keeps the glasses on A2DP rather than the 8 kHz
-  /// hands-free link. iOS only for now.
+  /// hands-free link. Available on both platforms in DAT development/beta
+  /// release channels. Device and firmware interruptions remain possible.
   static Stream<Uint8List> audioFramesStream() =>
       MetaWearablesDatPlatform.instance.audioFramesStream();
 
   /// Asks Meta AI for the glasses' microphone permission. Opens the Meta AI
-  /// app; the answer comes back through the app link, like the camera
-  /// permission, so pass that URL to [handleUrl]. iOS only for now.
+  /// app. On iOS, forward the app-link callback to [handleUrl]; Android uses
+  /// the activity result. Returns false for denial; SDK failures throw a
+  /// `PlatformException`. Call [requestAndroidPermissions] first on Android.
   static Future<bool> requestMicrophonePermission() =>
       MetaWearablesDatPlatform.instance.requestMicrophonePermission();
 
-  /// Whether the microphone permission is granted. Also `false` when no
-  /// glasses are connected to ask. iOS only for now.
+  /// Whether the microphone permission is granted. With no connected glasses,
+  /// iOS returns false; Android SDK connection failures throw a
+  /// `PlatformException` with code `DEVICE_DISCONNECTED`.
   static Future<bool> getMicrophonePermissionStatus() =>
       MetaWearablesDatPlatform.instance.getMicrophonePermissionStatus();
 
@@ -1157,9 +1162,7 @@ class MetaWearablesDat {
   /// every 400 ms instead of copying every frame across the platform channel.
   /// Leave it null to receive every frame. Values must be finite, greater than
   /// zero and no greater than 30.
-  static Stream<VideoFrame> videoFramesStream({
-    double? maxFramesPerSecond,
-  }) {
+  static Stream<VideoFrame> videoFramesStream({double? maxFramesPerSecond}) {
     _validateVideoFrameRate(maxFramesPerSecond);
     return MetaWearablesDatPlatform.instance.videoFramesStream(
       maxFramesPerSecond: maxFramesPerSecond,
