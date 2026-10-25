@@ -10,7 +10,7 @@ import 'package:flutter_meta_wearables_dat_example/shared/widgets/sheet_handle_b
 import 'package:provider/provider.dart';
 
 class SettingsSheet extends StatefulWidget {
-  const SettingsSheet({super.key});
+  const new({super.key});
 
   @override
   State<SettingsSheet> createState() => _SettingsSheetState();
@@ -46,9 +46,8 @@ class _SettingsSheetState extends State<SettingsSheet> {
             const SizedBox(height: 8),
             Text(
               'Settings',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(context).textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 18),
             const _StreamSettingsSection(),
@@ -63,7 +62,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
 }
 
 class _StreamSettingsSection extends StatelessWidget {
-  const _StreamSettingsSection();
+  const new();
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +106,7 @@ class _BackgroundStreamingToggle extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
 
-  const _BackgroundStreamingToggle({
+  const new({
     required this.value,
     required this.onChanged,
   });
@@ -163,7 +162,7 @@ class _FrameRatePicker extends StatelessWidget {
   final StreamFrameRate frameRate;
   final ValueChanged<StreamFrameRate>? onChanged;
 
-  const _FrameRatePicker({required this.frameRate, this.onChanged});
+  const new({required this.frameRate, this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +205,7 @@ class _ResolutionPicker extends StatelessWidget {
   final StreamQuality quality;
   final ValueChanged<StreamQuality>? onChanged;
 
-  const _ResolutionPicker({required this.quality, this.onChanged});
+  const new({required this.quality, this.onChanged});
 
   static const List<(StreamQuality, String, String)> _options = [
     (StreamQuality.low, 'Low', '360 \u00d7 640'),
@@ -260,7 +259,7 @@ class _ResolutionChip extends StatelessWidget {
   final VoidCallback? onTap;
   final ThemeData theme;
 
-  const _ResolutionChip({
+  const new({
     required this.label,
     required this.subtitle,
     required this.selected,
@@ -302,10 +301,7 @@ class _ResolutionChip extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: fg.withOpacity(0.7),
-                ),
+                style: TextStyle(fontSize: 10, color: fg.withOpacity(0.7)),
               ),
             ],
           ),
@@ -321,7 +317,7 @@ class _CodecSelector extends StatelessWidget {
   final ValueChanged<VideoCodec> onCodecChanged;
   final bool enabled;
 
-  const _CodecSelector({
+  const new({
     required this.videoCodec,
     required this.hvc1Supported,
     required this.onCodecChanged,
@@ -374,7 +370,7 @@ class _CodecChip extends StatelessWidget {
   final String? tooltip;
   final VoidCallback? onTap;
 
-  const _CodecChip({
+  const new({
     required this.label,
     required this.selected,
     this.enabled = true,
@@ -402,7 +398,7 @@ class _SectionTitle extends StatelessWidget {
   final String title;
   final IconData icon;
 
-  const _SectionTitle({required this.title, required this.icon});
+  const new({required this.title, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -427,7 +423,7 @@ class _SettingLabel extends StatelessWidget {
   final String value;
   final bool enabled;
 
-  const _SettingLabel({
+  const new({
     required this.label,
     required this.value,
     required this.enabled,

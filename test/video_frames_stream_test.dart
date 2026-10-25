@@ -37,9 +37,7 @@ void main() {
         30.1,
       ]) {
         expect(
-          () => MetaWearablesDat.videoFramesStream(
-            maxFramesPerSecond: value,
-          ),
+          () => MetaWearablesDat.videoFramesStream(maxFramesPerSecond: value),
           throwsArgumentError,
           reason: '$value should be rejected',
         );
@@ -65,10 +63,9 @@ void main() {
 
       expect(calls, isNotEmpty);
       expect(calls.first.method, 'listen');
-      expect(
-        calls.first.arguments,
-        <String, dynamic>{'maxFramesPerSecond': 2.5},
-      );
+      expect(calls.first.arguments, <String, dynamic>{
+        'maxFramesPerSecond': 2.5,
+      });
 
       await subscription.cancel();
     });

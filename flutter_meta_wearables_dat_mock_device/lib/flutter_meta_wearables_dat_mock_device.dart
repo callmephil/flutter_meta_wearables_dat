@@ -9,7 +9,7 @@ import 'package:flutter_meta_wearables_dat_mock_device/flutter_meta_wearables_da
 enum Permission {
   camera('camera');
 
-  const Permission(this.value);
+  new(this.value);
 
   /// String value sent over the platform channel.
   final String value;
@@ -20,7 +20,7 @@ enum PermissionStatus {
   granted('granted'),
   denied('denied');
 
-  const PermissionStatus(this.value);
+  new(this.value);
 
   /// String value sent over the platform channel.
   final String value;
@@ -31,7 +31,7 @@ enum CameraFacing {
   front('front'),
   back('back');
 
-  const CameraFacing(this.value);
+  new(this.value);
 
   /// String value sent over the platform channel.
   final String value;
@@ -49,7 +49,7 @@ enum GlassesModel {
   rayBanMetaOptics('rayBanMetaOptics'),
   metaGlasses('metaGlasses');
 
-  const GlassesModel(this.value);
+  new(this.value);
 
   /// String token sent over the platform channel; the native layer maps it to
   /// the SDK's `GlassesModel` enum case.

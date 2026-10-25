@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_meta_wearables_dat/flutter_meta_wearables_dat.dart';
@@ -17,7 +18,7 @@ class DeviceProvider extends ChangeNotifier {
   RegistrationState? get registrationState => _registrationState;
   bool get isRegistered => _registrationState == RegistrationState.registered;
 
-  DeviceProvider() {
+  new() {
     _initializeRegistrationState();
   }
 
@@ -77,9 +78,7 @@ class DeviceProvider extends ChangeNotifier {
       await MetaWearablesDat.disconnect();
     } on PlatformException catch (e) {
       if (e.code == 'UNREGISTRATION_ERROR') {
-        debugPrint(
-          '[MetaWearablesDAT] Unregistration error: ${e.message}',
-        );
+        debugPrint('[MetaWearablesDAT] Unregistration error: ${e.message}');
       } else {
         debugPrint('[MetaWearablesDAT] Error during disconnect: $e');
       }
@@ -243,6 +242,6 @@ class DeviceProvider extends ChangeNotifier {
     if (_hasCameraPermissionGranted ?? false) {
       return true;
     }
-    return requestCameraPermission();
+    return await requestCameraPermission();
   }
 }

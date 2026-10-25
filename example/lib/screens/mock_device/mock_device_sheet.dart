@@ -26,7 +26,7 @@ String glassesModelLabel(GlassesModel model) {
 }
 
 class MockDeviceSheet extends StatelessWidget {
-  const MockDeviceSheet({super.key});
+  const new({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +64,7 @@ class MockDeviceSheet extends StatelessWidget {
 }
 
 class _PairingCard extends StatelessWidget {
-  const _PairingCard({required this.mockDeviceProvider});
+  const new({required this.mockDeviceProvider});
 
   final MockDeviceProvider mockDeviceProvider;
 
@@ -87,9 +87,8 @@ class _PairingCard extends StatelessWidget {
                 if (paired)
                   Text(
                     'Device paired',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium!.copyWith(color: Colors.green),
+                    style: Theme.of(context).textTheme.bodyMedium!
+                        .copyWith(color: Colors.green),
                   )
                 else
                   const Text('No device paired'),
@@ -98,9 +97,8 @@ class _PairingCard extends StatelessWidget {
             Text(
               'Only one mock device can be active at a time. Pair to unlock '
               'the device controls below.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium!.copyWith(color: Colors.grey),
+              style: Theme.of(context).textTheme.bodyMedium!
+                  .copyWith(color: Colors.grey),
             ),
             const Divider(),
             if (!paired)
@@ -110,9 +108,8 @@ class _PairingCard extends StatelessWidget {
                   children: [
                     Text(
                       'Model',
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        color: Colors.grey,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium!
+                          .copyWith(color: Colors.grey),
                     ),
                     const SizedBox(width: 12),
                     DropdownButton<GlassesModel>(
@@ -150,7 +147,7 @@ class _PairingCard extends StatelessWidget {
 enum _FeedMode { liveCamera, media }
 
 class _DeviceControlsCard extends StatefulWidget {
-  const _DeviceControlsCard({
+  const new({
     required this.mockDeviceProvider,
     required this.streamProvider,
   });
@@ -226,9 +223,8 @@ class _DeviceControlsCardState extends State<_DeviceControlsCard> {
                       ),
                       Text(
                         '${mockDeviceProvider.deviceUUID}',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall!.copyWith(color: Colors.grey),
+                        style: Theme.of(context).textTheme.bodySmall!
+                            .copyWith(color: Colors.grey),
                       ),
                     ],
                   ),
@@ -261,10 +257,8 @@ class _DeviceControlsCardState extends State<_DeviceControlsCard> {
             const Divider(),
             Text(
               'Lifecycle',
-              style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                color: Colors.grey,
-                letterSpacing: 1,
-              ),
+              style: Theme.of(context).textTheme.labelSmall!
+                  .copyWith(color: Colors.grey, letterSpacing: 1),
             ),
             const SizedBox(height: 4),
             Row(
@@ -294,10 +288,8 @@ class _DeviceControlsCardState extends State<_DeviceControlsCard> {
               const SizedBox(height: 12),
               Text(
                 'Camera feed',
-                style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                  color: Colors.grey,
-                  letterSpacing: 1,
-                ),
+                style: Theme.of(context).textTheme.labelSmall!
+                    .copyWith(color: Colors.grey, letterSpacing: 1),
               ),
               const SizedBox(height: 4),
               _FeedModeSelector(mode: _mode, onChanged: _switchMode),
@@ -320,7 +312,7 @@ class _DeviceControlsCardState extends State<_DeviceControlsCard> {
 }
 
 class _FeedModeSelector extends StatelessWidget {
-  const _FeedModeSelector({required this.mode, required this.onChanged});
+  const new({required this.mode, required this.onChanged});
 
   final _FeedMode mode;
   final ValueChanged<_FeedMode> onChanged;
@@ -349,7 +341,7 @@ class _FeedModeSelector extends StatelessWidget {
 }
 
 class _CameraFacingRow extends StatelessWidget {
-  const _CameraFacingRow({
+  const new({
     required this.mockDeviceProvider,
     required this.enabled,
   });
@@ -392,7 +384,7 @@ class _CameraFacingRow extends StatelessWidget {
 }
 
 class _VideoPickerRow extends StatelessWidget {
-  const _VideoPickerRow({required this.streamProvider, required this.enabled});
+  const new({required this.streamProvider, required this.enabled});
 
   final stream_providers.StreamSessionProvider streamProvider;
   final bool enabled;
@@ -450,9 +442,8 @@ class _VideoPickerRow extends StatelessWidget {
                   )
                 : Text(
                     'Has camera feed',
-                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                      color: Colors.green,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall!
+                        .copyWith(color: Colors.green),
                   ),
           ),
         ),
@@ -462,7 +453,7 @@ class _VideoPickerRow extends StatelessWidget {
 }
 
 class _ImagePickerRow extends StatelessWidget {
-  const _ImagePickerRow({required this.streamProvider, required this.enabled});
+  const new({required this.streamProvider, required this.enabled});
 
   final stream_providers.StreamSessionProvider streamProvider;
   final bool enabled;
@@ -511,9 +502,8 @@ class _ImagePickerRow extends StatelessWidget {
                   )
                 : Text(
                     'Has captured image',
-                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                      color: Colors.green,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall!
+                        .copyWith(color: Colors.green),
                   ),
           ),
         ),

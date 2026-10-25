@@ -18,7 +18,7 @@ enum RegistrationState {
   /// User is successfully registered with the platform.
   registered(3);
 
-  const RegistrationState(this.value);
+  new(this.value);
 
   /// The value of the registration state.
   final int value;
@@ -48,7 +48,7 @@ enum VideoCodec {
   /// [MetaWearablesDat.enableBackgroundStreaming] was called.
   hvc1('hvc1');
 
-  const VideoCodec(this.value);
+  new(this.value);
 
   /// String value sent over the platform channel.
   final String value;
@@ -65,7 +65,7 @@ enum StreamQuality {
   /// Low quality stream (lowest bandwidth/CPU usage).
   low('low');
 
-  const StreamQuality(this.value);
+  new(this.value);
 
   /// String value sent over the platform channel.
   final String value;
@@ -84,7 +84,7 @@ enum StreamFrameRate {
   fps24(24),
   fps30(30);
 
-  const StreamFrameRate(this.value);
+  new(this.value);
 
   /// Frames per second sent over the platform channel.
   final int value;
@@ -134,7 +134,7 @@ enum StreamSessionState {
   /// frame. Render a "paused" affordance over it instead of swapping it out.
   paused(5);
 
-  const StreamSessionState(this.value);
+  new(this.value);
 
   /// The integer value of the state.
   final int value;
@@ -207,7 +207,7 @@ class StreamSessionError {
   /// A human-readable description of the error.
   final String message;
 
-  const StreamSessionError({required this.code, required this.message});
+  const new({required this.code, required this.message});
 
   /// Returns true if the device's thermal state has reached a critical level.
   bool get isThermalCritical => code == 'thermalCritical';
@@ -268,7 +268,7 @@ enum ThermalLevel {
   /// Device has shut down due to thermal overload.
   shutdown(7);
 
-  const ThermalLevel(this.value);
+  new(this.value);
 
   /// Integer value sent over the platform channel.
   final int value;
@@ -290,7 +290,7 @@ enum ThermalLevel {
 /// breaking the public API.
 @immutable
 class DeviceState {
-  const DeviceState({required this.thermalLevel});
+  const new({required this.thermalLevel});
 
   /// Current thermal level of the active device.
   final ThermalLevel thermalLevel;
@@ -323,7 +323,7 @@ enum WearableDeviceType {
   /// Model not reported, or a newer model this plugin version predates.
   unknown('unknown');
 
-  const WearableDeviceType(this.code);
+  new(this.code);
 
   /// Canonical code sent over the platform channel (identical on iOS/Android).
   final String code;
@@ -347,7 +347,7 @@ enum WearableLinkState {
   /// Link state not reported (e.g. SDK metadata not yet available).
   unknown('unknown');
 
-  const WearableLinkState(this.code);
+  new(this.code);
 
   /// Canonical code sent over the platform channel.
   final String code;
@@ -374,7 +374,7 @@ enum WearableCompatibility {
   /// The host app's bundled DAT SDK must be updated before use.
   sdkUpdateRequired('sdkUpdateRequired');
 
-  const WearableCompatibility(this.code);
+  new(this.code);
 
   /// Canonical code sent over the platform channel.
   final String code;
@@ -400,7 +400,7 @@ enum WearableCompatibility {
 /// more than one pair is connected.
 @immutable
 class WearableDevice {
-  const WearableDevice({
+  const new({
     required this.id,
     required this.name,
     required this.type,
@@ -418,7 +418,7 @@ class WearableDevice {
   /// fabricated. All other fields tolerate missing/null values and fall back
   /// to sensible defaults ([name] → [id], enums → their `unknown`/`undefined`
   /// case, bools → `false`).
-  factory WearableDevice.fromMap(Map<String, dynamic> map) {
+  factory fromMap(Map<String, dynamic> map) {
     final id = (map['id'] as String?)?.trim() ?? '';
     if (id.isEmpty) {
       throw ArgumentError.value(
@@ -516,7 +516,7 @@ class WearableDevice {
 /// Use [aspectRatio] when sizing the `Texture` widget so landscape or
 /// portrait frames aren't stretched into a hardcoded container.
 class VideoStreamSize {
-  const VideoStreamSize({required this.width, required this.height});
+  const new({required this.width, required this.height});
 
   final int width;
   final int height;
@@ -535,7 +535,7 @@ enum PhotoCaptureFormat {
   /// JPEG format — widely supported.
   jpeg('jpeg');
 
-  const PhotoCaptureFormat(this.value);
+  new(this.value);
 
   /// String value sent over the platform channel.
   final String value;
@@ -568,7 +568,7 @@ class CameraPermissionException implements Exception {
   /// Additional error details (e.g., errorType).
   final Map<String, dynamic>? details;
 
-  const CameraPermissionException({
+  const new({
     required this.code,
     required this.message,
     this.details,
@@ -605,7 +605,7 @@ class CapturedPhoto {
   /// The format of the captured photo.
   final String format;
 
-  const CapturedPhoto({required this.bytes, required this.format});
+  const new({required this.bytes, required this.format});
 
   String get fileExtension => format == 'heic' ? 'heic' : 'jpg';
 
@@ -636,7 +636,7 @@ class CapturedFrame {
   /// The pixel format of [bytes].
   final FrameFormat format;
 
-  const CapturedFrame({
+  const new({
     required this.bytes,
     required this.width,
     required this.height,
@@ -648,7 +648,7 @@ class CapturedFrame {
 /// stream alive while the app is backgrounded. Required on Android; ignored
 /// on iOS.
 class BackgroundNotification {
-  const BackgroundNotification({
+  const new({
     required this.title,
     required this.text,
     required this.channelId,
@@ -690,7 +690,7 @@ class BackgroundNotification {
 /// returned by [MetaWearablesDat.startStreamSession] — this stream is meant
 /// for recording or custom processing.
 class VideoFrame {
-  const VideoFrame({
+  const new({
     required this.codec,
     required this.bytes,
     required this.width,

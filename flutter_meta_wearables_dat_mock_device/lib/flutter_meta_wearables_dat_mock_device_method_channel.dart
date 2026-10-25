@@ -37,7 +37,7 @@ class MethodChannelMetaWearablesDatMockDevice
   Future<String?> pairGlasses({
     GlassesModel model = GlassesModel.rayBanMeta,
   }) async {
-    return methodChannel.invokeMethod<String>('pairGlasses', {
+    return await methodChannel.invokeMethod<String>('pairGlasses', {
       'model': model.value,
     });
   }

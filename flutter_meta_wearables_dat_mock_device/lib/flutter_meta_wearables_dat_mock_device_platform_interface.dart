@@ -8,7 +8,7 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 abstract class MetaWearablesDatMockDevicePlatform extends PlatformInterface {
   /// Constructs a MetaWearablesDatMockDevicePlatform.
-  MetaWearablesDatMockDevicePlatform() : super(token: _token);
+  new() : super(token: _token);
 
   static final Object _token = Object();
 

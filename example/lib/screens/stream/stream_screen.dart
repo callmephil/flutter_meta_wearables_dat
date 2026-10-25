@@ -12,7 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 class StreamScreen extends StatefulWidget {
-  const StreamScreen({super.key});
+  const new({super.key});
 
   @override
   State<StreamScreen> createState() => _StreamScreenState();
@@ -159,8 +159,7 @@ class _StreamScreenState extends State<StreamScreen> {
                               // While blocked, Start is disabled — say why,
                               // otherwise a greyed-out button reads as a bug.
                               child: Text(
-                                streamProvider.pendingUserActionHint ??
-                                    'Tap the Start streaming button to stream video from your glasses or use the camera button to take a photo from your glasses.',
+                                streamProvider.pendingUserActionHint ?? 'Tap the Start streaming button to stream video from your glasses or use the camera button to take a photo from your glasses.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 15,
@@ -348,7 +347,7 @@ String _sessionStateLabel(StreamSessionState state) {
 class _ThermalChip extends StatelessWidget {
   final ThermalLevel? level;
 
-  const _ThermalChip({required this.level});
+  const new({required this.level});
 
   @override
   Widget build(BuildContext context) {
@@ -410,7 +409,7 @@ class _ThermalChip extends StatelessWidget {
 /// Reassures the user that the stream is coming back rather than surfacing a
 /// hard error banner.
 class _ReconnectingView extends StatelessWidget {
-  const _ReconnectingView();
+  const new();
 
   @override
   Widget build(BuildContext context) {
@@ -464,7 +463,7 @@ class _TextureStreamWidget extends StatelessWidget {
   final int textureId;
   final VideoStreamSize? videoStreamSize;
 
-  const _TextureStreamWidget({
+  const new({
     required this.textureId,
     required this.videoStreamSize,
   });

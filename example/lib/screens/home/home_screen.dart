@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 /// Screen to show when user is not registered. It guides users through the
 /// DAT SDK registration process, matching the CameraAccess sample app.
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const new({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -54,10 +54,8 @@ class HomeScreen extends StatelessWidget {
                   Text(
                     "You'll be redirected to the Meta AI app to confirm your "
                     'connection.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(fontSize: 14, color: Colors.grey),
                     textAlign: TextAlign.center,
                     softWrap: true,
                   ),
@@ -93,7 +91,7 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _HomeTipItem extends StatelessWidget {
-  const _HomeTipItem({
+  const new({
     required this.icon,
     required this.title,
     required this.text,
@@ -129,10 +127,7 @@ class _HomeTipItem extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 text,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 15, color: Colors.grey[600]),
               ),
             ],
           ),

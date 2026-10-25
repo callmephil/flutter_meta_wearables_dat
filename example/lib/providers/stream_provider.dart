@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_meta_wearables_dat/flutter_meta_wearables_dat.dart';
@@ -135,7 +136,7 @@ class StreamSessionProvider extends ChangeNotifier {
   // reconciled without clobbering a real-pair choice.
   String? _lastMockUUID;
 
-  StreamSessionProvider(this.deviceProvider, this.mockDeviceProvider) {
+  new(this.deviceProvider, this.mockDeviceProvider) {
     _lastMockUUID = mockDeviceProvider.deviceUUID;
     mockDeviceProvider.addListener(_onMockDeviceChanged);
     _initializeActiveDeviceMonitoring();
@@ -477,7 +478,7 @@ class StreamSessionProvider extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    return _setStreamError(error);
+    return await _setStreamError(error);
   }
 
   Future<void> _setStreamError(StreamSessionError error) async {

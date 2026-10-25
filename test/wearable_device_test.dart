@@ -107,9 +107,9 @@ void main() {
     });
 
     test('tolerates a minimal map (only id) with sensible defaults', () {
-      final device = WearableDevice.fromMap(
-        const <String, dynamic>{'id': 'dev-2'},
-      );
+      final device = WearableDevice.fromMap(const <String, dynamic>{
+        'id': 'dev-2',
+      });
       expect(device.id, 'dev-2');
       expect(device.name, 'dev-2', reason: 'name falls back to id');
       expect(device.type, WearableDeviceType.unknown);

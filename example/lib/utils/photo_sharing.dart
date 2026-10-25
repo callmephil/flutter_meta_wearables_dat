@@ -6,8 +6,7 @@ import 'package:flutter_meta_wearables_dat/flutter_meta_wearables_dat.dart';
 /// The plugin's original capture bytes remain unchanged.
 Future<CapturedPhoto> preparePhotoForSharing(CapturedPhoto photo) async {
   if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return photo;
-  final jpeg = await const MethodChannel(
-    'example/photo_sharing',
-  ).invokeMethod<Uint8List>('orientedJpeg', photo.bytes);
+  final jpeg = await const MethodChannel('example/photo_sharing')
+      .invokeMethod<Uint8List>('orientedJpeg', photo.bytes);
   return jpeg == null ? photo : CapturedPhoto(bytes: jpeg, format: 'jpeg');
 }

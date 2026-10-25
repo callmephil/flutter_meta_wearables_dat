@@ -15,7 +15,7 @@ import 'package:provider/provider.dart';
 /// connection state. With two pairs of the same model this is how you tell
 /// them apart and see which one you're streaming from.
 class PairedDevicesSheet extends StatefulWidget {
-  const PairedDevicesSheet({super.key});
+  const new({super.key});
 
   @override
   State<PairedDevicesSheet> createState() => _PairedDevicesSheetState();
@@ -124,7 +124,7 @@ class _PairedDevicesSheetState extends State<PairedDevicesSheet> {
 
 /// "Automatic" entry — clears the pin so the SDK auto-selects the active pair.
 class _AutomaticTile extends StatelessWidget {
-  const _AutomaticTile({required this.selected, required this.onTap});
+  const new({required this.selected, required this.onTap});
 
   final bool selected;
   final VoidCallback onTap;
@@ -188,7 +188,7 @@ class _AutomaticTile extends StatelessWidget {
 }
 
 class _DeviceTile extends StatelessWidget {
-  const _DeviceTile({
+  const new({
     required this.device,
     required this.isSelected,
     required this.isStreaming,
@@ -316,7 +316,7 @@ class _DeviceTile extends StatelessWidget {
 }
 
 class _Badge extends StatelessWidget {
-  const _Badge({
+  const new({
     required this.label,
     required this.color,
     this.outlined = false,
@@ -348,7 +348,7 @@ class _Badge extends StatelessWidget {
 }
 
 class _MessageView extends StatelessWidget {
-  const _MessageView({
+  const new({
     required this.icon,
     required this.color,
     required this.message,

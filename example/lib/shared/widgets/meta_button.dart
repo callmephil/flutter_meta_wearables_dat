@@ -15,7 +15,7 @@ class MetaButton extends StatelessWidget {
   final _MetaButtonVariant _variant;
 
   // Primary text button — full-height (55), used for main actions.
-  const MetaButton.text({
+  const new text({
     super.key,
     required this.text,
     required this.onPressed,
@@ -26,7 +26,7 @@ class MetaButton extends StatelessWidget {
        _variant = _MetaButtonVariant.primaryText;
 
   // Secondary text button — reduced height, suited for dense tool rows.
-  const MetaButton.secondary({
+  const new secondary({
     super.key,
     required this.text,
     required this.onPressed,
@@ -37,7 +37,7 @@ class MetaButton extends StatelessWidget {
        _variant = _MetaButtonVariant.secondaryText;
 
   // Icon button (circle-shaped)
-  const MetaButton.icon({
+  const new icon({
     super.key,
     required this.icon,
     required this.onPressed,
@@ -74,10 +74,8 @@ class MetaButton extends StatelessWidget {
         },
         child: Text(
           text!,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+          style: Theme.of(context).textTheme.titleMedium
+              ?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
         ),
       ),
     );
