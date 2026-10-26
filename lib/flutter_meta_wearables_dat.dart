@@ -307,6 +307,117 @@ class DeviceState {
   int get hashCode => thermalLevel.hashCode;
 }
 
+/// One result from the glasses' on-device speech recognizer, delivered on
+/// [MetaWearablesDat.speechTranscriptionStream].
+@immutable
+class SpeechTranscription {
+  const new({
+    required this.text,
+    required this.isFinal,
+    required this.confidence,
+  });
+
+  /// The recognized text so far ([isFinal] `false`) or for the whole
+  /// utterance ([isFinal] `true`).
+  final String text;
+
+  /// Whether the recognizer has finished with this utterance. Partial results
+  /// can still change; a final one will not.
+  final bool isFinal;
+
+  /// From 0 to 1, or -1 when the glasses do not report one.
+  final double confidence;
+
+  @override
+  String toString() =>
+      'SpeechTranscription(${isFinal ? 'final' : 'partial'}: "$text")';
+}
+
+/// Lifecycle of the speech capability, mirroring the SDK's `SpeechState`.
+enum SpeechState {
+  starting('starting'),
+  started('started'),
+  stopping('stopping'),
+  stopped('stopped');
+
+  new(this.code);
+
+  /// Code sent over the platform channel.
+  final String code;
+
+  static SpeechState fromCode(String? code) => SpeechState.values.firstWhere(
+    (s) => s.code == code,
+    orElse: () => SpeechState.stopped,
+  );
+}
+
+/// A change in the speech capability, delivered on
+/// [MetaWearablesDat.speechStatusStream].
+@immutable
+class SpeechStatus {
+  const new({required this.state, this.error, this.details});
+
+  final SpeechState state;
+
+  /// Set when the update is an error: `deviceDisconnected`, `invalidState`,
+  /// `unavailable`, `alreadyListening`, `startFailed` or `unexpectedError`.
+  ///
+  /// `unavailable` covers both glasses that cannot recognize speech and a
+  /// missing microphone permission — the SDK reports them the same way.
+  final String? error;
+
+  /// The SDK's diagnostic text for [error], when it gives one.
+  final String? details;
+
+  @override
+  String toString() => 'SpeechStatus($state${error == null ? '' : ', $error'})';
+}
+
+/// A press of the glasses' physical capture button, delivered on
+/// [MetaWearablesDat.captureButtonStream] once the press is released.
+enum CaptureButtonPress {
+  shortPress('shortPress'),
+  hold('hold'),
+
+  /// Meta's Dev and Beta channels deliver a double press as a [shortPress]
+  /// followed by this.
+  doublePress('doublePress');
+
+  new(this.code);
+
+  /// Code sent over the platform channel.
+  final String code;
+
+  static CaptureButtonPress fromCode(String? code) => CaptureButtonPress.values
+      .firstWhere((p) => p.code == code, orElse: () => .shortPress);
+}
+
+/// How a "Hey Meta, open `app`" voice launch reached the app, delivered on
+/// [MetaWearablesDat.voiceLaunchStream].
+///
+/// One spoken launch can arrive both ways, so treat each as "the wearer asked
+/// for the app" and make acting on it idempotent.
+enum VoiceLaunchSource {
+  /// Meta AI launched or foregrounded the app's activity.
+  intent('intent'),
+
+  /// The glasses sent a launch on the invocations stream opened by
+  /// [MetaWearablesDat.startVoiceInvocations]. The plugin has already
+  /// answered it.
+  stream('stream');
+
+  new(this.code);
+
+  /// Code sent over the platform channel.
+  final String code;
+
+  static VoiceLaunchSource fromCode(String? code) =>
+      VoiceLaunchSource.values.firstWhere(
+        (s) => s.code == code,
+        orElse: () => VoiceLaunchSource.intent,
+      );
+}
+
 /// Hardware model of a paired Meta wearable, as reported by the DAT SDK.
 ///
 /// Note that two pairs of the *same* model both report the same value here
@@ -568,11 +679,7 @@ class CameraPermissionException implements Exception {
   /// Additional error details (e.g., errorType).
   final Map<String, dynamic>? details;
 
-  const new({
-    required this.code,
-    required this.message,
-    this.details,
-  });
+  const new({required this.code, required this.message, this.details});
 
   /// Returns true when the request failed because no Ray-Ban Meta device was
   /// reachable (powered off, out of Bluetooth range, or the Meta AI app
@@ -1194,6 +1301,108 @@ class MetaWearablesDat {
   /// active device changes.
   static Stream<DeviceState> deviceStateStream() {
     return MetaWearablesDatPlatform.instance.deviceStateStream();
+  }
+
+  /// Starts the glasses' on-device speech recognizer on the running session.
+  ///
+  /// Recognition runs on the glasses and only text crosses the link, so it
+  /// costs the stream no audio bandwidth. Call it once the stream reports
+  /// [StreamSessionState.streaming]: the SDK fails capabilities other than
+  /// the camera that are added while the device is still connecting. Results
+  /// arrive on [speechTranscriptionStream], state and errors on
+  /// [speechStatusStream] — subscribe to both first.
+  ///
+  /// Each call attaches a fresh recognizer, replacing a running one, so this
+  /// is also how to restart it. The SDK stops listening on its own after a
+  /// completion, an error or inactivity, and on Dev and Beta it silently
+  /// stops delivering text about a minute after a start.
+  ///
+  /// Needs the microphone permission ([requestMicrophonePermission]) and, on
+  /// real glasses, Speech enabled for the app in Wearables Developer Center.
+  /// A beta capability: development and beta release channels only.
+  ///
+  /// **Android only** for now; iOS throws `UnimplementedError`. Throws a
+  /// `PlatformException` with code `NO_SESSION` without a started session,
+  /// or `SPEECH_<ERROR>` when the recognizer could not start.
+  static Future<void> startSpeech() {
+    return MetaWearablesDatPlatform.instance.startSpeech();
+  }
+
+  /// Stops the speech recognizer and detaches it. Ending the session does
+  /// this too.
+  static Future<void> stopSpeech() {
+    return MetaWearablesDatPlatform.instance.stopSpeech();
+  }
+
+  /// Results from the speech recognizer started with [startSpeech].
+  ///
+  /// The SDK publishes on a state flow, so a result equal to the one before
+  /// it — the same short phrase said twice — arrives once.
+  static Stream<SpeechTranscription> speechTranscriptionStream() {
+    return MetaWearablesDatPlatform.instance.speechTranscriptionStream();
+  }
+
+  /// State changes and errors of the speech recognizer.
+  static Stream<SpeechStatus> speechStatusStream() {
+    return MetaWearablesDatPlatform.instance.speechStatusStream();
+  }
+
+  /// Opens the voice invocations stream, so "Hey Meta, open `app`" reaches
+  /// [voiceLaunchStream] while the app runs.
+  ///
+  /// Waits natively for registration before opening — Meta's samples note
+  /// that a stream opened earlier drops the launch Meta AI is holding — and
+  /// reopens itself after errors until [stopVoiceInvocations]. Every launch
+  /// is answered natively as it arrives: Meta AI tells the wearer the app is
+  /// not responding without an answer. Idempotent.
+  ///
+  /// Call [requestAndroidPermissions] first. Invocations reach a real pair
+  /// only as the app's Wearables Developer Center configuration allows; a
+  /// dev and beta capability, not for production release channels.
+  ///
+  /// **Android only** for now; iOS throws `UnimplementedError`.
+  static Future<void> startVoiceInvocations() {
+    return MetaWearablesDatPlatform.instance.startVoiceInvocations();
+  }
+
+  /// Closes the voice invocations stream opened by [startVoiceInvocations].
+  static Future<void> stopVoiceInvocations() {
+    return MetaWearablesDatPlatform.instance.stopVoiceInvocations();
+  }
+
+  /// Delivers the glasses' physical capture button to
+  /// [captureButtonStream] while the session runs (DAT Inputs, beta). Call
+  /// it once the stream reports [StreamSessionState.streaming]: Inputs can
+  /// only be added to a started session. Already attached, it is left as
+  /// is — the SDK restores it after a reconnect — and ending the session
+  /// detaches it.
+  ///
+  /// Needs no runtime permission, but on real glasses Inputs needs approval
+  /// for the app in Wearables Developer Center; without it the capability
+  /// attaches and then delivers nothing. Dev and beta channels only.
+  ///
+  /// **Android only** for now; iOS throws `UnimplementedError`. Throws a
+  /// `PlatformException` with code `NO_SESSION` without a started session,
+  /// or `INPUTS_UNAVAILABLE` when it could not be attached.
+  static Future<void> startCaptureButton() {
+    return MetaWearablesDatPlatform.instance.startCaptureButton();
+  }
+
+  /// Stops delivering capture button presses.
+  static Future<void> stopCaptureButton() {
+    return MetaWearablesDatPlatform.instance.stopCaptureButton();
+  }
+
+  /// Presses of the glasses' capture button, after [startCaptureButton].
+  static Stream<CaptureButtonPress> captureButtonStream() {
+    return MetaWearablesDatPlatform.instance.captureButtonStream();
+  }
+
+  /// One event per voice launch of the app. A launch that cold-started the
+  /// app is held until the first listener, so subscribing late still hears
+  /// it.
+  static Stream<VoiceLaunchSource> voiceLaunchStream() {
+    return MetaWearablesDatPlatform.instance.voiceLaunchStream();
   }
 }
 

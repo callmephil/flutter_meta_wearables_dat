@@ -121,6 +121,13 @@ class MetaWearablesDatPlugin :
     private var foregroundTracker: AppForegroundTracker? = null
     @Volatile private var isAppInBackground: Boolean = false
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val speechController = SpeechController(scope)
+    private lateinit var speechTranscriptionsChannel: EventChannel
+    private lateinit var speechStatusChannel: EventChannel
+    private val voiceInvocations = VoiceInvocationController(scope)
+    private lateinit var voiceInvocationsChannel: EventChannel
+    private val captureButton = CaptureButtonController(scope)
+    private lateinit var captureButtonChannel: EventChannel
 
     // Gate SDK initialization until BT permissions are granted (mirrors reference app).
     private var btPermissionsGranted = false
@@ -285,6 +292,31 @@ class MetaWearablesDatPlugin :
                 )
         deviceStateChannel.setStreamHandler(deviceStateStreamHandler)
 
+        speechTranscriptionsChannel =
+                EventChannel(
+                        flutterPluginBinding.binaryMessenger,
+                        "flutter_meta_wearables_dat/speech_transcriptions",
+                )
+        speechTranscriptionsChannel.setStreamHandler(speechController.transcriptions)
+        speechStatusChannel =
+                EventChannel(
+                        flutterPluginBinding.binaryMessenger,
+                        "flutter_meta_wearables_dat/speech_status",
+                )
+        speechStatusChannel.setStreamHandler(speechController.status)
+        voiceInvocationsChannel =
+                EventChannel(
+                        flutterPluginBinding.binaryMessenger,
+                        "flutter_meta_wearables_dat/voice_invocations",
+                )
+        voiceInvocationsChannel.setStreamHandler(voiceInvocations)
+        captureButtonChannel =
+                EventChannel(
+                        flutterPluginBinding.binaryMessenger,
+                        "flutter_meta_wearables_dat/capture_button",
+                )
+        captureButtonChannel.setStreamHandler(captureButton.presses)
+
         textureRegistry = flutterPluginBinding.textureRegistry
 
         val context = flutterPluginBinding.applicationContext
@@ -413,6 +445,47 @@ class MetaWearablesDatPlugin :
             "disableBackgroundStreaming" -> disableBackgroundStreaming(result)
             "isBackgroundStreamingEnabled" -> result.success(backgroundStreamingStarted)
             "openDATGlassesAppUpdate" -> openDATGlassesAppUpdate(result)
+            "startSpeech" -> {
+                val failure = speechController.start(session)
+                if (failure == null) {
+                    result.success(true)
+                } else {
+                    result.error(failure.first, failure.second, null)
+                }
+            }
+            "stopSpeech" -> {
+                speechController.release()
+                result.success(true)
+            }
+            "startVoiceInvocations" -> {
+                ensureWearablesInitialized()
+                if (!btPermissionsGranted) {
+                    result.error(
+                            "PERMISSION_ERROR",
+                            "Bluetooth permissions not granted; call requestAndroidPermissions() first.",
+                            null,
+                    )
+                } else {
+                    voiceInvocations.start()
+                    result.success(true)
+                }
+            }
+            "stopVoiceInvocations" -> {
+                voiceInvocations.stop()
+                result.success(true)
+            }
+            "startCaptureButton" -> {
+                val failure = captureButton.start(session)
+                if (failure == null) {
+                    result.success(true)
+                } else {
+                    result.error(failure.first, failure.second, null)
+                }
+            }
+            "stopCaptureButton" -> {
+                captureButton.release()
+                result.success(true)
+            }
             else -> result.notImplemented()
         }
     }
@@ -442,6 +515,13 @@ class MetaWearablesDatPlugin :
         deviceStateChannel.setStreamHandler(null)
         deviceStateStreamHandler?.dispose()
         deviceStateStreamHandler = null
+        speechTranscriptionsChannel.setStreamHandler(null)
+        speechStatusChannel.setStreamHandler(null)
+        speechController.dispose()
+        voiceInvocationsChannel.setStreamHandler(null)
+        voiceInvocations.dispose()
+        captureButtonChannel.setStreamHandler(null)
+        captureButton.dispose()
 
         unregisterForegroundTracker()
 
@@ -471,11 +551,16 @@ class MetaWearablesDatPlugin :
         activityBinding = binding
         binding.addActivityResultListener(this)
         binding.addRequestPermissionsResultListener(this)
+        // A voice launch that cold-started the app arrives as the activity's
+        // own intent; one that foregrounds it, through onNewIntent.
+        binding.addOnNewIntentListener(voiceInvocations)
+        voiceInvocations.checkIntent(binding.activity.intent)
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
         activityBinding?.removeActivityResultListener(this)
         activityBinding?.removeRequestPermissionsResultListener(this)
+        activityBinding?.removeOnNewIntentListener(voiceInvocations)
         activityBinding = null
         activity = null
     }
@@ -485,12 +570,14 @@ class MetaWearablesDatPlugin :
         activityBinding = binding
         binding.addActivityResultListener(this)
         binding.addRequestPermissionsResultListener(this)
+        binding.addOnNewIntentListener(voiceInvocations)
     }
 
     override fun onDetachedFromActivity() {
         permissionRequests.abort("Activity detached before permission completed.")
         activityBinding?.removeActivityResultListener(this)
         activityBinding?.removeRequestPermissionsResultListener(this)
+        activityBinding?.removeOnNewIntentListener(voiceInvocations)
         activityBinding = null
         activity = null
     }
@@ -1891,6 +1978,10 @@ class MetaWearablesDatPlugin :
      */
     private fun teardownSession() {
         teardownStreamOnly()
+        // Speech and the capture button hang off the session, not the
+        // camera, so they end here.
+        speechController.release()
+        captureButton.release()
         sessionErrorsJob?.cancel()
         sessionErrorsJob = null
         deviceAvailabilityJob?.cancel()

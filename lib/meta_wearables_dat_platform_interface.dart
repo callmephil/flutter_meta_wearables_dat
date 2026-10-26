@@ -176,4 +176,50 @@ abstract class MetaWearablesDatPlatform extends PlatformInterface {
   Stream<DeviceState> deviceStateStream() {
     throw UnimplementedError('deviceStateStream() has not been implemented.');
   }
+
+  Future<void> startSpeech() {
+    throw UnimplementedError('startSpeech() has not been implemented.');
+  }
+
+  Future<void> stopSpeech() {
+    throw UnimplementedError('stopSpeech() has not been implemented.');
+  }
+
+  Stream<SpeechTranscription> speechTranscriptionStream() {
+    throw UnimplementedError(
+      'speechTranscriptionStream() has not been implemented.',
+    );
+  }
+
+  Stream<SpeechStatus> speechStatusStream() {
+    throw UnimplementedError('speechStatusStream() has not been implemented.');
+  }
+
+  Future<void> startVoiceInvocations() {
+    throw UnimplementedError(
+      'startVoiceInvocations() has not been implemented.',
+    );
+  }
+
+  Future<void> stopVoiceInvocations() {
+    throw UnimplementedError(
+      'stopVoiceInvocations() has not been implemented.',
+    );
+  }
+
+  Future<void> startCaptureButton() {
+    throw UnimplementedError('startCaptureButton() has not been implemented.');
+  }
+
+  Future<void> stopCaptureButton() {
+    throw UnimplementedError('stopCaptureButton() has not been implemented.');
+  }
+
+  Stream<CaptureButtonPress> captureButtonStream() {
+    throw UnimplementedError('captureButtonStream() has not been implemented.');
+  }
+
+  Stream<VoiceLaunchSource> voiceLaunchStream() {
+    throw UnimplementedError('voiceLaunchStream() has not been implemented.');
+  }
 }

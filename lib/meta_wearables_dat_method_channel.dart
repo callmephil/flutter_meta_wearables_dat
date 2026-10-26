@@ -63,6 +63,31 @@ class MethodChannelMetaWearablesDat extends MetaWearablesDatPlatform {
     'flutter_meta_wearables_dat/device_state',
   );
 
+  /// The event channel used to receive the speech recognizer's results.
+  @visibleForTesting
+  final speechTranscriptionsEventChannel = const EventChannel(
+    'flutter_meta_wearables_dat/speech_transcriptions',
+  );
+
+  /// The event channel used to receive the speech recognizer's state and
+  /// errors.
+  @visibleForTesting
+  final speechStatusEventChannel = const EventChannel(
+    'flutter_meta_wearables_dat/speech_status',
+  );
+
+  /// The event channel used to receive the glasses' capture button presses.
+  @visibleForTesting
+  final captureButtonEventChannel = const EventChannel(
+    'flutter_meta_wearables_dat/capture_button',
+  );
+
+  /// The event channel used to receive voice launches of the app.
+  @visibleForTesting
+  final voiceInvocationsEventChannel = const EventChannel(
+    'flutter_meta_wearables_dat/voice_invocations',
+  );
+
   @override
   Future<bool> requestAndroidPermissions() async {
     final ok = await methodChannel.invokeMethod<bool>(
@@ -402,6 +427,76 @@ class MethodChannelMetaWearablesDat extends MetaWearablesDatPlatform {
         );
       }
       return state;
+    });
+  }
+
+  @override
+  Future<void> startSpeech() => methodChannel.invokeMethod<bool>('startSpeech');
+
+  @override
+  Future<void> stopSpeech() => methodChannel.invokeMethod<bool>('stopSpeech');
+
+  @override
+  Stream<SpeechTranscription> speechTranscriptionStream() {
+    return speechTranscriptionsEventChannel.receiveBroadcastStream().map((
+      dynamic event,
+    ) {
+      final map = Map<String, dynamic>.from(event as Map);
+      return SpeechTranscription(
+        text: map['text'] as String? ?? '',
+        isFinal: map['isFinal'] as bool? ?? false,
+        confidence: (map['confidence'] as num?)?.toDouble() ?? -1,
+      );
+    });
+  }
+
+  @override
+  Stream<SpeechStatus> speechStatusStream() {
+    return speechStatusEventChannel.receiveBroadcastStream().map((
+      dynamic event,
+    ) {
+      final map = Map<String, dynamic>.from(event as Map);
+      return SpeechStatus(
+        state: SpeechState.fromCode(map['state'] as String?),
+        error: map['error'] as String?,
+        details: map['details'] as String?,
+      );
+    });
+  }
+
+  @override
+  Future<void> startCaptureButton() =>
+      methodChannel.invokeMethod<bool>('startCaptureButton');
+
+  @override
+  Future<void> stopCaptureButton() =>
+      methodChannel.invokeMethod<bool>('stopCaptureButton');
+
+  @override
+  Stream<CaptureButtonPress> captureButtonStream() {
+    return captureButtonEventChannel.receiveBroadcastStream().map((
+      dynamic event,
+    ) {
+      final map = Map<String, dynamic>.from(event as Map);
+      return CaptureButtonPress.fromCode(map['pressType'] as String?);
+    });
+  }
+
+  @override
+  Future<void> startVoiceInvocations() =>
+      methodChannel.invokeMethod<bool>('startVoiceInvocations');
+
+  @override
+  Future<void> stopVoiceInvocations() =>
+      methodChannel.invokeMethod<bool>('stopVoiceInvocations');
+
+  @override
+  Stream<VoiceLaunchSource> voiceLaunchStream() {
+    return voiceInvocationsEventChannel.receiveBroadcastStream().map((
+      dynamic event,
+    ) {
+      final map = Map<String, dynamic>.from(event as Map);
+      return VoiceLaunchSource.fromCode(map['source'] as String?);
     });
   }
 }
