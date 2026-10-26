@@ -107,6 +107,64 @@ class MethodChannelMetaWearablesDatMockDevice
   }
 
   @override
+  Future<bool> fold(String deviceUUID) => _deviceAction('fold', deviceUUID);
+
+  @override
+  Future<bool> unfold(String deviceUUID) => _deviceAction('unfold', deviceUUID);
+
+  @override
+  Future<bool> tap(String deviceUUID) => _deviceAction('tap', deviceUUID);
+
+  @override
+  Future<bool> tapAndHold(String deviceUUID) =>
+      _deviceAction('tapAndHold', deviceUUID);
+
+  @override
+  Future<String?> simulateLaunchAppAction(String deviceUUID) async {
+    return await methodChannel.invokeMethod<String>('simulateLaunchAppAction', {
+      'deviceUUID': deviceUUID,
+    });
+  }
+
+  @override
+  Future<bool> simulateTranscription(
+    String deviceUUID,
+    String text, {
+    bool isFinal = true,
+    double confidence = 1,
+  }) async {
+    final listening = await methodChannel.invokeMethod<bool>(
+      'simulateTranscription',
+      {
+        'deviceUUID': deviceUUID,
+        'text': text,
+        'isFinal': isFinal,
+        'confidence': confidence,
+      },
+    );
+    return listening ?? false;
+  }
+
+  @override
+  Future<bool> pressCaptureButton(
+    String deviceUUID, {
+    String press = 'shortPress',
+  }) async {
+    final ok = await methodChannel.invokeMethod<bool>('pressCaptureButton', {
+      'deviceUUID': deviceUUID,
+      'pressType': press,
+    });
+    return ok ?? false;
+  }
+
+  Future<bool> _deviceAction(String method, String deviceUUID) async {
+    final ok = await methodChannel.invokeMethod<bool>(method, {
+      'deviceUUID': deviceUUID,
+    });
+    return ok ?? false;
+  }
+
+  @override
   Future<bool> setCameraFeed(String deviceUUID, String? videoPath) async {
     final ok = await methodChannel.invokeMethod<bool>('setCameraFeed', {
       'deviceUUID': deviceUUID,

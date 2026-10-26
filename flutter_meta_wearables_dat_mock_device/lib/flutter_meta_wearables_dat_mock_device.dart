@@ -165,6 +165,88 @@ class MetaWearablesDatMockDevice {
     return MetaWearablesDatMockDevicePlatform.instance.doff(deviceUUID);
   }
 
+  /// Simulates folding the arms of a mock glasses device. During a stream
+  /// this ends the session with `hingesClosed`.
+  ///
+  /// **Android only** for now; iOS throws `UnimplementedError`.
+  static Future<bool> fold(String deviceUUID) {
+    return MetaWearablesDatMockDevicePlatform.instance.fold(deviceUUID);
+  }
+
+  /// Simulates unfolding the arms of a mock glasses device.
+  ///
+  /// **Android only** for now; iOS throws `UnimplementedError`.
+  static Future<bool> unfold(String deviceUUID) {
+    return MetaWearablesDatMockDevicePlatform.instance.unfold(deviceUUID);
+  }
+
+  /// Simulates a single touchpad tap. During a stream this pauses or resumes
+  /// the session.
+  ///
+  /// **Android only** for now; iOS throws `UnimplementedError`.
+  static Future<bool> tap(String deviceUUID) {
+    return MetaWearablesDatMockDevicePlatform.instance.tap(deviceUUID);
+  }
+
+  /// Simulates a tap and hold on the touchpad. During a stream this stops the
+  /// session.
+  ///
+  /// **Android only** for now; iOS throws `UnimplementedError`.
+  static Future<bool> tapAndHold(String deviceUUID) {
+    return MetaWearablesDatMockDevicePlatform.instance.tapAndHold(deviceUUID);
+  }
+
+  /// Simulates the wearer saying "Hey Meta, open `app`": dispatches a launch
+  /// action to the app's voice invocation stream.
+  ///
+  /// Returns the dispatched request id, or `null` when no app was listening
+  /// for voice invocations — which means the app was not listening, not that
+  /// the invocation failed.
+  ///
+  /// **Android only** for now; iOS throws `UnimplementedError`.
+  static Future<String?> simulateLaunchAppAction(String deviceUUID) {
+    return MetaWearablesDatMockDevicePlatform.instance.simulateLaunchAppAction(
+      deviceUUID,
+    );
+  }
+
+  /// Injects [text] as a transcription from the glasses' speech recognizer,
+  /// as a partial result unless [isFinal].
+  ///
+  /// Returns whether the mock was listening. MockDeviceKit drops an injection
+  /// made while no speech capability is started. Results reach the app on a
+  /// state flow, so the same text twice in a row arrives once.
+  ///
+  /// **Android only** for now; iOS throws `UnimplementedError`.
+  static Future<bool> simulateTranscription(
+    String deviceUUID,
+    String text, {
+    bool isFinal = true,
+    double confidence = 1,
+  }) {
+    return MetaWearablesDatMockDevicePlatform.instance.simulateTranscription(
+      deviceUUID,
+      text,
+      isFinal: isFinal,
+      confidence: confidence,
+    );
+  }
+
+  /// Presses the glasses' physical capture button, as a [press] of
+  /// `shortPress`, `hold` or `doublePress`. Reaches the app only while it
+  /// has the capture button attached to a running session.
+  ///
+  /// **Android only** for now; iOS throws `UnimplementedError`.
+  static Future<bool> pressCaptureButton(
+    String deviceUUID, {
+    String press = 'shortPress',
+  }) {
+    return MetaWearablesDatMockDevicePlatform.instance.pressCaptureButton(
+      deviceUUID,
+      press: press,
+    );
+  }
+
   /// Streams an HEVC/H.265 video file as the mock device's camera feed.
   /// Pass `null` to clear the source.
   static Future<bool> setCameraFeed(String deviceUUID, String? videoPath) {

@@ -76,6 +76,46 @@ abstract class MetaWearablesDatMockDevicePlatform extends PlatformInterface {
     throw UnimplementedError('doff() has not been implemented.');
   }
 
+  Future<bool> fold(String deviceUUID) {
+    throw UnimplementedError('fold() has not been implemented.');
+  }
+
+  Future<bool> unfold(String deviceUUID) {
+    throw UnimplementedError('unfold() has not been implemented.');
+  }
+
+  Future<bool> tap(String deviceUUID) {
+    throw UnimplementedError('tap() has not been implemented.');
+  }
+
+  Future<bool> tapAndHold(String deviceUUID) {
+    throw UnimplementedError('tapAndHold() has not been implemented.');
+  }
+
+  Future<String?> simulateLaunchAppAction(String deviceUUID) {
+    throw UnimplementedError(
+      'simulateLaunchAppAction() has not been implemented.',
+    );
+  }
+
+  Future<bool> simulateTranscription(
+    String deviceUUID,
+    String text, {
+    bool isFinal = true,
+    double confidence = 1,
+  }) {
+    throw UnimplementedError(
+      'simulateTranscription() has not been implemented.',
+    );
+  }
+
+  Future<bool> pressCaptureButton(
+    String deviceUUID, {
+    String press = 'shortPress',
+  }) {
+    throw UnimplementedError('pressCaptureButton() has not been implemented.');
+  }
+
   Future<bool> setCameraFeed(String deviceUUID, String? videoPath) {
     throw UnimplementedError('setCameraFeed() has not been implemented.');
   }

@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.meta.wearable.dat.inputs.types.CapturePressType
 import com.meta.wearable.dat.mockdevice.MockDeviceKit
 import com.meta.wearable.dat.mockdevice.api.GlassesModel
 import com.meta.wearable.dat.mockdevice.api.MockGlasses
@@ -124,6 +125,10 @@ class MetaWearablesDatMockDevicePlugin :
             "pairGlasses" -> pairGlasses(call, result)
             "unpairGlasses" -> unpairGlasses(call, result)
             "powerOn", "powerOff", "don", "doff" -> mockDeviceAction(call, result)
+            "fold", "unfold", "tap", "tapAndHold" -> mockGlassesAction(call, result)
+            "simulateLaunchAppAction" -> simulateLaunchAppAction(call, result)
+            "simulateTranscription" -> simulateTranscription(call, result)
+            "pressCaptureButton" -> pressCaptureButton(call, result)
             "setCameraFeed" -> setCameraFeed(call, result)
             "setCameraFacing" -> setCameraFacing(call, result)
             "setCapturedImage" -> setCapturedImage(call, result)
@@ -289,6 +294,118 @@ class MetaWearablesDatMockDevicePlugin :
             }
         } catch (e: Exception) {
             result.error("MOCK_DEVICE_ERROR", e.message ?: "Failed to perform action", null)
+        }
+    }
+
+    /**
+     * Resolves the call's `deviceUUID` to a paired [MockGlasses], answering
+     * [result] with the error and returning null when it cannot.
+     */
+    private fun findGlasses(call: MethodCall, result: Result): MockGlasses? {
+        val app = application
+        if (app == null) {
+            result.error("MOCK_DEVICE_ERROR", "Application context is not available.", null)
+            return null
+        }
+        val deviceId = call.argument<String>("deviceUUID")
+        if (deviceId == null) {
+            result.error("INVALID_ARGS", "deviceUUID is missing", null)
+            return null
+        }
+        val device =
+                MockDeviceKit.getInstance(app).pairedDevices.find {
+                    it.deviceIdentifier.toString() == deviceId
+                }
+        if (device !is MockGlasses) {
+            result.error("DEVICE_NOT_FOUND", "No mock glasses found with uuid $deviceId", null)
+            return null
+        }
+        return device
+    }
+
+    /**
+     * Hinge and touchpad gestures. During a stream the SDK treats them as the
+     * wearer would: a tap pauses or resumes the session, tap-and-hold and
+     * folding stop it.
+     */
+    private fun mockGlassesAction(call: MethodCall, result: Result) {
+        val glasses = findGlasses(call, result) ?: return
+        try {
+            when (call.method) {
+                "fold" -> glasses.fold()
+                "unfold" -> glasses.unfold()
+                "tap" -> glasses.services.captouch.tap()
+                "tapAndHold" -> glasses.services.captouch.tapAndHold()
+            }
+            result.success(true)
+        } catch (e: Exception) {
+            result.error("MOCK_DEVICE_ERROR", e.message ?: "Failed to perform action", null)
+        }
+    }
+
+    /**
+     * Dispatches a "Hey Meta, open <app>" launch to the app's voice invocation
+     * stream. Answers the dispatched request id, or null when no app is
+     * listening, which MockDeviceKit reports rather than treating as a failure.
+     */
+    private fun simulateLaunchAppAction(call: MethodCall, result: Result) {
+        val glasses = findGlasses(call, result) ?: return
+        try {
+            result.success(glasses.services.voiceInvocation.simulateLaunchAppAction())
+        } catch (e: Exception) {
+            result.error("MOCK_DEVICE_ERROR", e.message ?: "Failed to simulate voice launch", null)
+        }
+    }
+
+    /**
+     * Injects a transcription as if the glasses had recognized [text]. Answers
+     * whether the mock was listening: an injection outside a started speech
+     * capability is dropped by MockDeviceKit with only a log line.
+     */
+    private fun simulateTranscription(call: MethodCall, result: Result) {
+        val glasses = findGlasses(call, result) ?: return
+        val text = call.argument<String>("text")
+        if (text == null) {
+            result.error("INVALID_ARGS", "text is missing", null)
+            return
+        }
+        val isFinal = call.argument<Boolean>("isFinal") ?: true
+        val confidence = call.argument<Double>("confidence")?.toFloat() ?: 1f
+        try {
+            val speech = glasses.services.speech
+            val listening = speech.isListening
+            speech.simulateTranscription(text, isFinal, confidence)
+            result.success(listening)
+        } catch (e: Exception) {
+            result.error("MOCK_DEVICE_ERROR", e.message ?: "Failed to simulate transcription", null)
+        }
+    }
+
+    /**
+     * Presses the glasses' physical capture button. Reaches the app only
+     * while it has the capture button attached to a running session.
+     */
+    private fun pressCaptureButton(call: MethodCall, result: Result) {
+        val glasses = findGlasses(call, result) ?: return
+        val press =
+                when (call.argument<String>("pressType") ?: "shortPress") {
+                    "shortPress" -> CapturePressType.SHORT_PRESS
+                    "hold" -> CapturePressType.HOLD
+                    "doublePress" -> CapturePressType.DOUBLE_PRESS
+                    else -> {
+                        result.error(
+                                "INVALID_ARGS",
+                                "pressType must be 'shortPress', 'hold' or 'doublePress'",
+                                null,
+                        )
+                        return
+                    }
+                }
+        try {
+            glasses.services.input.capture(press)
+            result.success(true)
+        } catch (e: Exception) {
+            result.error("MOCK_DEVICE_ERROR", e.message ?: "Failed to press capture", null)
         }
     }
 
