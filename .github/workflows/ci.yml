@@ -124,6 +124,19 @@ jobs:
           fi
           echo "OK: all four version locations are at $CORE_PUBSPEC"
 
+      # The mock add-on's mwdat-mockdevice must be the same DAT release as the
+      # core's mwdat-core / mwdat-camera, or consumers get mixed-ABI artifacts.
+      - name: Verify both plugins pin the same DAT version
+        run: |
+          CORE_DAT=$(sed -n 's/^val mwdatVersion *= *"\([^"]*\)".*/\1/p' android/build.gradle.kts)
+          MOCK_DAT=$(sed -n 's/^val mwdatVersion *= *"\([^"]*\)".*/\1/p' flutter_meta_wearables_dat_mock_device/android/build.gradle.kts)
+          echo "core mwdatVersion : $CORE_DAT"
+          echo "mock mwdatVersion : $MOCK_DAT"
+          if [ -z "$CORE_DAT" ] || [ "$CORE_DAT" != "$MOCK_DAT" ]; then
+            echo "ERROR: both android/build.gradle.kts files must set the same mwdatVersion"
+            exit 1
+          fi
+
       # The install snippets in README / AGENTS / the agent rule files are a
       # fifth version location, and until now nothing read them. `^0.9.0`
       # resolves to >=0.9.0 <0.10.0, so a *minor* bump silently leaves every
