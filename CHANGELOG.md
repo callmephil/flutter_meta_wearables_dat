@@ -1,3 +1,12 @@
+## Unreleased
+
+- Android: speech (beta). `startSpeech()` attaches the glasses' on-device recognizer (`mwdat-speech`) to the running session; results arrive on `speechTranscriptionStream()`, state and errors on `speechStatusStream()`. Each start attaches a fresh recognizer, which is also how to restart it: on Dev and Beta the SDK stops delivering text about a minute after a start, and leaves a recognizer that completed reporting `started` while it no longer listens. Ending the session detaches it.
+- Android: the glasses' capture button (beta). `startCaptureButton()` attaches Inputs (`mwdat-inputs`) narrowed to the capture button; presses arrive on `captureButtonStream()` as `CaptureButtonPress`. An attached capability is left alone on a repeat call (the SDK restores it after a reconnect); ending the session detaches it. Real glasses need Inputs approved for the app in Wearables Developer Center.
+- Android: voice launch (dev and beta). `startVoiceInvocations()` opens the invocations stream once the app is registered and keeps it open; `voiceLaunchStream()` emits one `VoiceLaunchSource` per "Hey Meta, open …", from the launch intent (`isVoiceInvocationsIntent`, checked on attach and on `onNewIntent`) and from the stream. Every `LaunchApp` is answered natively on arrival, so Meta AI never reports the app as not responding while Dart is still starting; a launch that cold-starts the app is held for the first listener.
+- Android: move the plugin's Gradle files to the Flutter 3.47 Kotlin DSL template (`build.gradle.kts`). The plugin no longer applies the Kotlin Gradle plugin: AGP 9 built-in Kotlin compiles it, and with built-in Kotlin off (AGP 8, or `android.builtInKotlin=false`) Flutter's Gradle plugin applies KGP. The Java/Kotlin bytecode target rises from 11 to 17.
+- Example: regenerate the Android project on AGP 9.1, Gradle 9.3.1 and Kotlin 2.4 with built-in Kotlin enabled, and upgrade `app_links` to 7, `share_plus` to 13 and `file_picker` to 13. The video picker keeps HEVC originals through `DarwinAssetRepresentationMode.current`.
+- Docs: Android setup now says to raise `minSdk` to 29, and that `flutter create` projects already reach Maven Central without a repository change.
+
 ## 1.0.1
 
 - Upgrade Meta Wearables DAT to 1.0.1 on iOS and Android. Android includes upstream fixes for HEVC buffer corruption and stream lag/stutter; iOS has no developer-facing SDK changes. The known intermittent iOS locked-background session termination remains unresolved.

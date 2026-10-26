@@ -1,6 +1,6 @@
 ---
 description: Setting up flutter_meta_wearables_dat in a Flutter project — package installation, iOS Info.plist, Android manifest/gradle/MainActivity configuration
-globs: pubspec.yaml,**/Info.plist,**/AndroidManifest.xml,**/settings.gradle*,**/MainActivity.*
+globs: pubspec.yaml,**/Info.plist,**/AndroidManifest.xml,**/build.gradle*,**/settings.gradle*,**/MainActivity.*
 ---
 
 # DAT Flutter Setup
@@ -24,7 +24,9 @@ Transport does not affect App Store eligibility — the SDK links `ExternalAcces
 
 ## Android
 - **AndroidManifest.xml**: BLUETOOTH, BLUETOOTH_CONNECT, INTERNET permissions + `com.meta.wearable.mwdat.APPLICATION_ID` meta-data + intent-filter with URL scheme
-- **settings.gradle.kts**: `mavenCentral()` for DAT 1.0.x; no GitHub credentials. Use `PREFER_SETTINGS` mode.
+- **app/build.gradle.kts**: `minSdk = 29` (`flutter.minSdkVersion` is lower and fails the manifest merge)
+- **Repositories**: `mavenCentral()` for DAT 1.0.x; no GitHub credentials. `flutter create` projects already list it in `android/build.gradle.kts`; only a `settings.gradle.kts` `dependencyResolutionManagement` setup needs it added, in `PREFER_SETTINGS` mode.
+- **Kotlin**: the plugins build with AGP 8 or 9, built-in Kotlin on or off; no Kotlin Gradle plugin setup for them.
 - **MainActivity**: Must extend `FlutterFragmentActivity` (not `FlutterActivity`)
 
 ## Deep links

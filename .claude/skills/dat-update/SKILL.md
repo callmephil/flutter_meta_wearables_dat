@@ -109,7 +109,7 @@ carries all three, but the swap itself must still be ordered so a failure can't 
 no frameworks at all. See `references/environment.md` § "Swapping the xcframeworks safely" for the
 exact sequence, then run `./scripts/thin-xcframeworks.sh`.
 
-Android: bump `ext.mwdat_version` in **both** `android/build.gradle` files.
+Android: bump `mwdatVersion` in **both** `android/build.gradle.kts` files.
 
 Re-check the iOS deployment floor — it moves without warning:
 ```bash

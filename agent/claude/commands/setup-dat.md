@@ -32,10 +32,11 @@ Audit and configure this Flutter project for flutter_meta_wearables_dat integrat
 
    Report any missing entries and offer to add them.
 
-5. **Android Gradle audit** — Read `android/settings.gradle.kts` and verify:
-   - `mavenCentral()` repository for DAT 1.0.x (no credentials needed)
+5. **Android Gradle audit** — Read `android/app/build.gradle.kts`, `android/build.gradle.kts` and `android/settings.gradle.kts` and verify:
+   - `minSdk` is 29 or higher (`flutter.minSdkVersion` is lower and fails the manifest merge)
+   - `mavenCentral()` is reachable for DAT 1.0.x (no credentials needed): either in `allprojects { repositories }` of `android/build.gradle.kts`, as `flutter create` generates it, or in `dependencyResolutionManagement` of `settings.gradle.kts` with `PREFER_SETTINGS`
 
-   Report if missing and offer to add it.
+   Report anything missing and offer to fix it.
 
 6. **MainActivity audit** — Find the MainActivity file and verify it extends `FlutterFragmentActivity` (not `FlutterActivity`). This is required for DAT permission handling on Android.
 

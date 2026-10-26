@@ -311,7 +311,15 @@ Switching transport is a **config-only change** — no plugin update or Dart cod
 </application>
 ```
 
-**settings.gradle.kts** — Use Maven Central (no token required):
+**android/app/build.gradle.kts** — Raise `minSdk` to 29 (the template's `flutter.minSdkVersion` is lower and fails the manifest merge):
+
+```kotlin
+defaultConfig {
+    minSdk = 29
+}
+```
+
+**Repositories** — DAT 1.0.x is on Maven Central; no GitHub Packages token is required. A `flutter create` project already lists `mavenCentral()` in `android/build.gradle.kts` (`allprojects { repositories { … } }`), so it needs no change. Only a project that declares repositories in `settings.gradle.kts` must add it there, with `PREFER_SETTINGS` because Flutter's Gradle plugin adds project-level repositories:
 
 ```kotlin
 dependencyResolutionManagement {
@@ -324,7 +332,7 @@ dependencyResolutionManagement {
 }
 ```
 
-DAT 1.0.x uses Maven Central; no GitHub Packages token is required.
+The plugins build with AGP 8 and AGP 9, with built-in Kotlin on or off; they need no Kotlin Gradle plugin setup.
 
 **MainActivity** — Must extend `FlutterFragmentActivity` (not `FlutterActivity`):
 

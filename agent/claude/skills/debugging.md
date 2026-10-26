@@ -81,6 +81,7 @@ Do **not** tear down on `thermalCritical` / `deviceThermalCritical`: those pause
 ## Android-specific issues
 
 - **FlutterFragmentActivity required:** `FlutterActivity` does not extend `ComponentActivity`, so `ActivityResultLauncher` cannot register. Camera permissions will fail silently.
+- **Minimum SDK 29:** A manifest-merge failure naming `minSdkVersion` means the app still uses `flutter.minSdkVersion`; set `minSdk = 29` in `android/app/build.gradle.kts`.
 - **Dependency resolution:** DAT 1.0.x uses Maven Central; no GitHub token is required.
 - **SDK not initialized:** If `requestAndroidPermissions()` is not called (and granted) before other DAT calls, device discovery will not work.
 

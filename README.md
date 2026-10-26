@@ -291,7 +291,15 @@ Switching transport — whether upgrading an older app or troubleshooting one th
 
 ### Android Configuration
 
-**Minimum SDK:** Android API 29 (Android 10).
+**Minimum SDK:** Android API 29 (Android 10). Flutter's template sets `minSdk = flutter.minSdkVersion`, which is lower, so raise it in `android/app/build.gradle.kts` or the manifest merge fails:
+
+```kotlin
+defaultConfig {
+    minSdk = 29
+}
+```
+
+**Build tooling:** both plugins build with AGP 8 and AGP 9, with built-in Kotlin on or off (`android.builtInKotlin`); no Kotlin Gradle plugin setup is needed for them.
 
 #### 1. AndroidManifest.xml
 
@@ -333,7 +341,9 @@ Add the following to your app's `AndroidManifest.xml`:
 
 #### 2. Repository Configuration
 
-DAT 1.0.x is published to Maven Central. No GitHub token is required. In `settings.gradle.kts`:
+DAT 1.0.x is published to Maven Central. No GitHub token is required, and a project created by `flutter create` needs no change: its `android/build.gradle.kts` already lists `mavenCentral()` under `allprojects { repositories { … } }`.
+
+Only if your project declares repositories centrally in `settings.gradle.kts` does `mavenCentral()` need to be there:
 
 ```kotlin
 dependencyResolutionManagement {

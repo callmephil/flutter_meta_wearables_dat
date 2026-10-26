@@ -7,7 +7,7 @@ This repo ships **two federated plugins** that both consume the Meta Wearables D
 
 Update **both** packages together when bumping the DAT version, otherwise the host app will mix incompatible binaries from the two SDKs. Follow the platform-specific steps below.
 
-> **Do not skip the mock add-on.** A DAT bump means replacing **all three** iOS xcframeworks (`MWDATCore`, `MWDATCamera`, **and** `MWDATMockDevice`) and bumping `ext.mwdat_version` in **both** Android `build.gradle` files. Leaving `MWDATMockDevice` / `mwdat-mockdevice` on an older DAT release will break the example app and any consumer that depends on `flutter_meta_wearables_dat_mock_device`.
+> **Do not skip the mock add-on.** A DAT bump means replacing **all three** iOS xcframeworks (`MWDATCore`, `MWDATCamera`, **and** `MWDATMockDevice`) and bumping `mwdatVersion` in **both** Android `build.gradle.kts` files. Leaving `MWDATMockDevice` / `mwdat-mockdevice` on an older DAT release will break the example app and any consumer that depends on `flutter_meta_wearables_dat_mock_device`.
 
 > **Doing this with Claude Code?** The `/dat-update <version>` skill
 > ([`.claude/skills/dat-update/`](../.claude/skills/dat-update/SKILL.md)) runs this whole guide end
@@ -100,7 +100,7 @@ cd example && flutter clean
 
 Then a Clean Build Folder in Xcode (`Cmd+Shift+K`) if you build from there.
 
-Note this is hygiene rather than a checksum problem: both plugins use `.binaryTarget(path:)`, which carries no checksum, and neither committed `Package.resolved` contains an MWDAT entry at all (they only pin the remote packages that `image_picker` and friends pull in). Clearing the workspace state forces Xcode to re-read the replaced xcframeworks instead of reusing a stale build graph.
+Note this is hygiene rather than a checksum problem: both plugins use `.binaryTarget(path:)`, which carries no checksum, and the example commits no `Package.resolved` at all: every package in its graph is a local path, so Xcode has no remote pins to record. Clearing the workspace state forces Xcode to re-read the replaced xcframeworks instead of reusing a stale build graph.
 
 ### 4. Implement API Changes
 
@@ -143,14 +143,14 @@ The Android implementation uses Maven dependencies from Maven Central. Follow th
 
 ### 2. Update Plugin Version
 
-Update the version in **both** `build.gradle` files (each plugin owns its own `ext.mwdat_version`):
+Update the version in **both** `build.gradle.kts` files (each plugin owns its own `mwdatVersion`):
 
-```groovy
-// android/build.gradle (core)
-ext.mwdat_version = "1.0.1"  // mwdat-core, mwdat-camera
+```kotlin
+// android/build.gradle.kts (core)
+val mwdatVersion = "1.0.1"  // mwdat-core, mwdat-camera
 
-// flutter_meta_wearables_dat_mock_device/android/build.gradle
-ext.mwdat_version = "1.0.1"  // mwdat-mockdevice
+// flutter_meta_wearables_dat_mock_device/android/build.gradle.kts
+val mwdatVersion = "1.0.1"  // mwdat-mockdevice
 ```
 
 Keep the two values in sync — mixing versions across the two plugins risks ABI breakage at runtime.
@@ -224,7 +224,7 @@ Before tagging, confirm:
    a `0.x` version excludes the next minor, so a minor bump must update them or
    the docs install a release without the new API. Patch bumps need no change.
    The `versions-in-sync` CI job enforces this.
-3. **If this release bumps the DAT SDK:** all three iOS xcframeworks are updated (`MWDATCore` + `MWDATCamera` in the core plugin **and** `MWDATMockDevice` in the mock add-on), `./scripts/thin-xcframeworks.sh` has been run, and both Android `ext.mwdat_version` values match.
+3. **If this release bumps the DAT SDK:** all three iOS xcframeworks are updated (`MWDATCore` + `MWDATCamera` in the core plugin **and** `MWDATMockDevice` in the mock add-on), `./scripts/thin-xcframeworks.sh` has been run, and both Android `mwdatVersion` values match.
 4. **Both `CHANGELOG.md` files have a `## <new-version>` entry.** The publish workflow's `github-release` job extracts these for the GitHub release notes — missing entries produce an empty release body.
 5. **Both packages are clean locally:**
    ```bash

@@ -1,3 +1,8 @@
+## Unreleased
+
+- Android: wearer simulation — `tap` and `tapAndHold` (captouch: pause or resume, and stop, a running stream), `fold` and `unfold`, `simulateLaunchAppAction` ("Hey Meta, open …", answered with the request id, or `null` when no app listens) `simulateTranscription` (answers whether a speech recognizer was listening) and `pressCaptureButton`.
+- Android: move the Gradle files to the Flutter 3.47 Kotlin DSL template in lockstep with the core plugin. The add-on no longer applies the Kotlin Gradle plugin itself, and its bytecode target rises from 11 to 17.
+
 ## 1.0.1
 
 - Upgrade MockDeviceKit to DAT 1.0.1 on iOS and Android, in lockstep with the core plugin. No mock Dart API changes.

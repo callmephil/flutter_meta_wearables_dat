@@ -114,7 +114,7 @@ ok "plugin version consistent at $CORE_PUB (all four locations)"
 FLOOR="$(grep -ho 'target arm64-apple-ios[0-9.]*' \
   "$ROOT"/ios/flutter_meta_wearables_dat/Frameworks/MWDATCamera.xcframework/ios-arm64/*/Modules/*.swiftmodule/*.swiftinterface \
   2>/dev/null | head -1 | sed 's/.*ios//')"
-MWDAT_NOW="$(sed -n 's/.*ext\.mwdat_version *= *"\([^"]*\)".*/\1/p' "$ROOT/android/build.gradle" | head -1)"
+MWDAT_NOW="$(sed -n 's/.*val mwdatVersion *= *"\([^"]*\)".*/\1/p' "$ROOT/android/build.gradle.kts" | head -1)"
 
 cat <<EOF
 

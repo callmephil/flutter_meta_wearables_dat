@@ -102,7 +102,15 @@ Transport does not affect App Store eligibility — the SDK links `ExternalAcces
 </application>
 ```
 
-**android/settings.gradle.kts** — Use Maven Central (no token required):
+**android/app/build.gradle.kts** — Raise `minSdk` to 29 (the template's `flutter.minSdkVersion` is lower and fails the manifest merge):
+
+```kotlin
+defaultConfig {
+    minSdk = 29
+}
+```
+
+**Repositories** — DAT 1.0.x uses Maven Central; no GitHub Packages token is required. A `flutter create` project already lists `mavenCentral()` in `android/build.gradle.kts` (`allprojects { repositories { … } }`) and needs no change. Only if the project declares repositories in `android/settings.gradle.kts` add it there:
 
 ```kotlin
 dependencyResolutionManagement {
@@ -117,7 +125,7 @@ dependencyResolutionManagement {
 
 Use `PREFER_SETTINGS` (not `FAIL_ON_PROJECT_REPOS`) because Flutter's Gradle plugin adds repositories at the project level.
 
-DAT 1.0.x uses Maven Central; no GitHub Packages token is required.
+The plugins build with AGP 8 and AGP 9, with built-in Kotlin on or off; do not add the Kotlin Gradle plugin on their behalf.
 
 **MainActivity** — Must extend `FlutterFragmentActivity`:
 

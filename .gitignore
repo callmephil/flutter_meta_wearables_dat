@@ -45,6 +45,9 @@ flutter_meta_wearables_dat_mock_device/build/
 doc/android/meta-wearables-dat-android/
 doc/ios/meta-wearables-dat-ios/
 
+# Gradle 9 writes its problems report here, outside the build dir Flutter redirects to example/build
+example/android/build/
+
 # --- SENSITIVE: Never commit these ---
 # Android local.properties (contains flutter.sdk path + GitHub token for DAT SDK)
 **/local.properties
