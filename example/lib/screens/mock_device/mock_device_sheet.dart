@@ -403,19 +403,20 @@ class _VideoPickerRow extends StatelessWidget {
               try {
                 provider.setIsLoadingVideo(true);
 
-                // Use file_picker instead of image_picker to preserve HEVC format
-                final result = await FilePicker.platform.pickFiles(
+                // Use file_picker instead of image_picker to preserve HEVC
+                // format: the `current` representation hands back the photo
+                // library's original instead of transcoding it on iOS.
+                final file = await FilePicker.pickFile(
                   type: FileType.video,
-                  allowCompression: false,
+                  darwinOptions: const DarwinOptions(
+                    assetRepresentationMode:
+                        DarwinAssetRepresentationMode.current,
+                  ),
                 );
 
                 if (!context.mounted) return;
 
-                if (result != null && result.files.single.path != null) {
-                  provider.setSelectedVideo(result.files.single.path);
-                } else {
-                  provider.setSelectedVideo(null);
-                }
+                provider.setSelectedVideo(file?.path);
               } catch (e) {
                 debugPrint('[MetaWearablesDAT]Error picking video: $e');
                 provider.setSelectedVideo(null);

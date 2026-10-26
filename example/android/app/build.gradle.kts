@@ -3,7 +3,6 @@ import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -25,12 +24,8 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     defaultConfig {
@@ -40,18 +35,14 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 29
         targetSdk = flutter.targetSdkVersion
+        // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
+        // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
+        // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`
+        // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         manifestPlaceholders["META_APPLICATION_ID"] = metaApplicationId
         manifestPlaceholders["META_CLIENT_TOKEN"] = metaClientToken
-    }
-
-    lint {
-        // lintVitalRelease cannot resolve FlutterFragmentActivity on its
-        // classpath and reports MainActivity as not instantiatable, failing
-        // the release build. Known false positive with the Flutter Gradle
-        // plugin; the activity hierarchy is exercised at runtime regardless.
-        disable += "Instantiatable"
     }
 
     buildTypes {
@@ -64,6 +55,12 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 
